@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoaderCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import Image from 'next/image';
 
 const SignIn = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
@@ -38,6 +41,7 @@ const SignIn = () => {
   };
 
   const handleSubmit = async (e) => {
+    setLoading(true);
     e.preventDefault();
     const { email, password } = formData;
 
@@ -62,6 +66,8 @@ const SignIn = () => {
         description: "There was a problem with your request.",
       });
       console.error("Error signing in:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,8 +99,15 @@ const SignIn = () => {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center px-4 bg-[#f8f9fa]">
-      <Card className="mx-auto max-w-sm shadow-[0_0_20px_#acacac8f] rounded-lg">
+    <div className="flex w-full  justify-center px-4 bg-[#f8f9fa] p-4 h-[44rem]">
+      <div className='flex justify-center items-center flex-col pl-40 pb-44'>
+        <h2 className='text-[28px] text-[#414b5d]'>
+          Hire talent with RewindJobs
+        </h2>
+        <span className='text-[#414b5d]'> Find, engage, and hire talent on India’s leading recruitment platform</span>
+        <Image src={'/assets/sigin.png'} priority width={300} height={300} alt="image" />
+      </div>
+      <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Sign In</CardTitle>
           <CardDescription className="text-center">
@@ -132,9 +145,11 @@ const SignIn = () => {
             </div>
             <Button type="submit" className="w-full">
               Sign In
+              {loading ? <LoaderCircle className="animate-spin mr-2" /> : "Register"}
             </Button>
             <Button variant="outline" className="w-full" onClick={googleSign}>
               Sign in with Google
+
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

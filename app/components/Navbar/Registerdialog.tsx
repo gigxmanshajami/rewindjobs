@@ -2,6 +2,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import { Fragment, useState } from 'react'
 import { LockClosedIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 const Register = () => {
     let [isOpen, setIsOpen] = useState(false)
@@ -19,9 +20,7 @@ const Register = () => {
             <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto  sm:pr-0">
                 <div className='hidden lg:block'>
                     <Link href={`/registration`}>
-                        <button className="text-blue text-lg font-medium ml-9 py-4 px-8 transition duration-150 ease-in-out leafbutton bg-lightblue hover:text-white hover:bg-blue">
-                            Sign up
-                        </button>
+                        <Button variant="outline" className='bg-black text-white shadow-none font-bold p-[22px] rounded-[50px]'>Sign Up</Button>
                     </Link>
                 </div>
             </div>

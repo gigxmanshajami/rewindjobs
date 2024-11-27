@@ -12,6 +12,7 @@ import { auth, db } from '../../firebase/firebase';
 import { getDoc, doc } from 'firebase/firestore';
 import { ToastAction } from "@/components/ui/toast"
 // import { toast } from 'react-toastify';
+import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from 'next/navigation';
 import {
     DropdownMenu,
@@ -115,7 +116,7 @@ const Navbar = () => {
 
                     {/* Display loading state or user avatar */}
                     {loading ? (
-                        <div>Loading...</div>
+                        <Skeleton className="w-[40px] h-[40px] rounded-full" />
                     ) : loggedIn ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -123,7 +124,9 @@ const Navbar = () => {
                                     <AvatarImage
                                         src={userDetail?.photoURL || auth.currentUser?.photoURL || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"}
                                     />
-                                    <AvatarFallback>CN</AvatarFallback>
+                                    <AvatarFallback>
+                                             <Skeleton className="w-[40px] h-[40px] rounded-full" />
+                                    </AvatarFallback>
                                 </Avatar>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56 mr-8">

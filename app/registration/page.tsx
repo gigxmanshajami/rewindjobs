@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from 'next/image';
 const RegistrationPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -49,6 +50,14 @@ const RegistrationPage = () => {
         name: formData.fullName,
         email: formData.email,
         mobile: formData.mobile,
+        profileSummary: "",
+        resume: {
+          resumeheadline: "",
+        },
+        skills: {
+          keys: [],
+        },
+
       });
 
       toast.success("User Registered Successfully");
@@ -95,8 +104,15 @@ const RegistrationPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Card className="max-w-md w-full">
+    <div className="flex w-full  justify-center px-4 bg-[#f8f9fa] p-4 h-[44rem]">
+      <div className='flex justify-center items-center flex-col pl-40 pb-44'>
+        <h2 className='text-[28px] text-[#414b5d]'>
+          Hire talent with RewindJobs
+        </h2>
+        <span className='text-[#414b5d]'> Find, engage, and hire talent on India’s leading recruitment platform</span>
+        <Image src={'/assets/sigin.png'} priority width={300} height={300} alt="image" />
+      </div>
+      <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit">
         <CardHeader>
           <h2 className="text-2xl font-bold">Create your Profile</h2>
         </CardHeader>
@@ -145,7 +161,7 @@ const RegistrationPage = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Password (min. 6 characters)"
+                placeholder="Password (min. 8 characters)"
                 required
               />
             </div>
@@ -156,7 +172,7 @@ const RegistrationPage = () => {
                 type="file"
                 name="resume"
                 onChange={handleChange}
-                required
+
               />
             </div>
           </CardContent>
@@ -171,7 +187,7 @@ const RegistrationPage = () => {
           </CardFooter>
         </form>
       </Card>
-    </div>
+    </div >
   );
 };
 

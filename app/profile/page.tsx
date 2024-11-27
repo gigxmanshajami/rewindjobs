@@ -1,17 +1,23 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import React, { useCallback } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { auth, db, storage } from "../firebase/firebase";
+import { auth, db, storage, } from "../firebase/firebase";
 import { useEffect, useState, useRef } from "react";
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, getAuth, PhoneAuthProvider, signInWithCredential, RecaptchaVerifier, linkWithCredential, reauthenticateWithCredential, updateProfile } from "firebase/auth";
+import { Textarea } from "@/components/ui/textarea"
+
 import { ref, deleteObject, listAll, uploadBytes, getDownloadURL, uploadBytesResumable, } from "firebase/storage";
 import { CircularProgressbarWithChildren } from 'react-circular-progressbar';
+import { debounce, } from 'lodash';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import _isEqual from 'lodash/isEqual'
 import Link from 'next/link';
 import { FaCamera } from "react-icons/fa";
-import { MapPinHouse, Pencil, BriefcaseBusiness, Calendar, Phone, Mail } from 'lucide-react';
+import { MapPinHouse, Pencil, BriefcaseBusiness, Calendar, Phone, Mail, CloudDownload, Trash2 } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -21,16 +27,36 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
-import nprogress from 'nprogress';
+import { Badge } from "@/components/ui/badge";
+import { useSectionRefs } from "../SectionRefsContext";
+import { format } from 'date-fns';
+import { Console } from "console";
 type Props = {}
+const sections = ["uploadSection", "statusSection"];
+const missingFieldLabels = {
+    name: "Name",
+    email: "Email",
+    profileSummary: "Profile Summary",
+    location: "Preferred Location",
+    mobile: "Mobile Number",
+    photoURL: "Profile Photo",
+    "resume.resumepath": "Resume",
+    "skills.keys": "Skills",
+};
 
 const page = (props: Props) => {
 
+    const [comploading, setcomploading] = useState(false);
+    const [openDialog, setOpenDialog] = useState(null);
+    const [unfilledFields, setUnfilledFields] = useState([]);
+
     const [open, setOpen] = useState(false);
+    const [openResumeHeadlineDialog, setOpenResumeHeadlineDialog] = useState(false);
     const [userDetail, setUserDetail] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [croppedImage, setCroppedImage] = useState(null);
@@ -39,9 +65,200 @@ const page = (props: Props) => {
     const [originalFileName, setOriginalFileName] = useState({ name: '', type: '' }); // Store original file name
     const fileInputRef = useRef(null);
     const [cropping, setCropping] = useState(false);
+    const [progress, setProgress] = useState(0)
     const [cropArea, setCropArea] = useState(null);
     const [verificationId, setVerificationId] = useState(null);
     const [otp, setOtp] = useState("");
+
+    const sectionRefs = useRef({}); // Store refs for each missing field
+    const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
+    const [employmentDetails, setEmploymentDetails] = useState({});
+
+
+    // Utility function to update state only if values have changed
+    const updateStateIfChanged = (prevState, newState, setState) => {
+        if (JSON.stringify(prevState) !== JSON.stringify(newState)) {
+            setState(newState);
+        }
+    };
+
+    // Populate refs for each field
+    const populateRefs = (fields) => {
+        fields.forEach((field) => {
+            if (!sectionRefs.current[field]) {
+                sectionRefs.current[field] = React.createRef();
+            }
+        });
+    };
+
+    const skibdii = (skibidi) => {
+        return skibidi;
+    }
+    skibidi('skibidi');
+
+    const fetchUserData = async (user) => {
+        if (!user) {
+            console.warn("No user provided for fetching data.");
+            return null;
+        }
+
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+
+                // Set dialog data efficiently, avoiding unnecessary re-renders
+                setDialogData((prev) => {
+                    const updatedData = {
+                        skills: data?.skills?.keys || [],
+                        summary: data?.profileSummary || "",
+                        resumeheadline: data?.resume?.resumeheadline || "",
+                    };
+                    return JSON.stringify(prev) !== JSON.stringify(updatedData) ? updatedData : prev;
+                });
+
+                setFormData(data);
+                return data;
+            } else {
+                console.warn("No data found for the user.");
+                return null;
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "An error occurred while fetching your profile data. Please try again.",
+            });
+            return null;
+        }
+    };
+
+
+    const calculateProgress = useCallback(debounce((userData) => {
+        const fields = [
+            "name",
+            "email",
+            "profileSummary",
+            "location",
+            "mobile",
+            "photoURL",
+            "resume.resumeheadline",
+            "resume.resumepath", // Nested field
+        ];
+
+        const missingFields = [];
+        const filledFields = fields.filter((field) => {
+            const keys = field.split(".");
+            let value = userData;
+
+            keys.forEach((key) => {
+                value = value?.[key];
+            });
+
+            if (!value) {
+                missingFields.push(field);
+            }
+
+            return !!value;
+        });
+
+        const skillsKeys = userData?.skills?.keys;
+        if (Array.isArray(skillsKeys) && skillsKeys.length > 0) {
+            filledFields.push("skills.keys");
+        } else {
+            missingFields.push("skills.keys");
+        }
+
+        const totalFields = fields.length + 1; // +1 for skills.keys field
+        const progressValue = Math.round((filledFields.length / totalFields) * 100);
+
+        setProgress(progressValue);
+
+        setUnfilledFields(missingFields.map((field) => missingFieldLabels[field] || field));
+
+        populateRefs(missingFields);
+
+        return { progress: progressValue, missingFields };
+    }, 500), []); // Debounce for 500ms
+
+    const updateUserProgress = async (userId, userData) => {
+        try {
+            const { progress } = calculateProgress(userData);
+
+            // Update progress in Firestore
+            const userDoc = doc(db, "users", userId);
+            await updateDoc(userDoc, { progress });
+            console.log(`User progress updated to ${progress}%`);
+        } catch (error) {
+            console.error("Error updating progress:", error);
+        }
+    };
+
+
+    const subscribeToUser = (userId) => {
+        const userDoc = doc(db, "users", userId);
+
+        return onSnapshot(userDoc, (snapshot) => {
+            const userData = snapshot.data();
+            if (userData) {
+                updateUserProgress(userId, userData);
+            }
+        });
+    };
+
+    useEffect(() => {
+        const initialize = async () => {
+            setcomploading(true);
+
+            try {
+                const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        const userData = await fetchUserData(user);
+
+                        // Subscribe to Firestore changes
+                        const firestoreUnsubscribe = subscribeToUser(user.uid);
+
+                        // Calculate progress initially
+                        calculateProgress(userData);
+
+                        // Cleanup function to unsubscribe from Firestore
+                        return () => firestoreUnsubscribe();
+                    } else {
+                        console.warn("No user is signed in.");
+                    }
+                });
+
+                // Cleanup function to unsubscribe from auth state listener
+                return () => unsubscribe();
+            } catch (error) {
+                console.error("Error initializing user data:", error);
+            } finally {
+                setcomploading(false);
+            }
+        };
+
+        initialize();
+    }, []); // Empty dependency array ensures this runs once on mount
+
+    const handleScrollToFirstMissingField = () => {
+        // Find the first missing field using unfilledFields
+        const firstMissingFieldKey = unfilledFields[0];
+
+        if (firstMissingFieldKey) {
+            const firstMissingFieldRef = sectionRefs.current[firstMissingFieldKey];
+
+            if (firstMissingFieldRef && firstMissingFieldRef.current) {
+                firstMissingFieldRef.current.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center", // Scroll to the center of the screen
+                });
+            }
+        }
+    };
+
     const handleImageClick = () => {
         fileInputRef.current.click();
     };
@@ -113,10 +330,8 @@ const page = (props: Props) => {
             uploadTask.on(
                 "state_changed",
                 (snapshot) => {
-                    nprogress.start();
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     console.log(`Upload is ${progress}% done`);
-                    nprogress.set(progress);
                 },
                 (err) => {
                     console.error("Upload error:", err);
@@ -127,7 +342,7 @@ const page = (props: Props) => {
                     console.log("File available at", downloadURL);
 
                     // Update Firestore user profile URL
-                    await updateDoc(doc(db, "users", user.uid), { photoURL: downloadURL });
+                    await updateDoc(doc(db, "users", user.uid), { photoURL: downloadURL, lastUpdated: new Date() });
                     // updating the auth data
                     updateProfile(auth.currentUser, {
                         photoURL: downloadURL,
@@ -136,7 +351,6 @@ const page = (props: Props) => {
                     });
                     // Show a toast message and reload the page
                     toast({ title: "Image uploaded successfully" });
-                    nprogress.done(true);
                     window.location.reload();
                 }
             );
@@ -149,7 +363,10 @@ const page = (props: Props) => {
             });
         }
     };
+    useEffect(() => {
+        console.log(userDetail);
 
+    }, [])
     const handleCancelCrop = () => {
         setSelectedImage(null); // Clear selected image
         setCropping(false); // Close cropping dialog
@@ -164,13 +381,7 @@ const page = (props: Props) => {
         availability: "1 Month"
     });
 
-    const handleInputChange = (e) => {
-        const { id, value } = e.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            [id]: value,
-        }));
-    };
+    const [dialogdata, setDialogData] = useState({});
 
     const handleAvailabilityChange = (value) => {
         setFormData((prevData) => ({
@@ -185,15 +396,17 @@ const page = (props: Props) => {
             const user = auth.currentUser;
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
-                await updateDoc(userDocRef, {
+                await setDoc(userDocRef, {
                     name: formData.name,
                     location: formData.location,
                     mobile: formData.mobile,
                     email: formData.email,
+                    lastUpdated: new Date(),
                     availability: formData.availability
-                });
+                }, { merge: true });
                 toast({ title: "Profile updated successfully!" });
                 setOpen(false);
+                window.location.reload()
             }
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -248,18 +461,6 @@ const page = (props: Props) => {
         }
         try {
             const credential = PhoneAuthProvider.credential(verificationId, otp);
-            // Instead of signing in, just verify the OTP
-            // const result = await reauthenticateWithCredential(auth,credential);    
-            // if (result) {
-            //     // Update Firestore with the verified phone number
-            //     const userDocRef = doc(db, "users", auth.currentUser.uid);
-            //     await updateDoc(userDocRef, {
-            //         mobile: formData.mobile, // assuming formData.mobile contains the verified number
-            //         phoneVerified: true
-            //     });
-
-            //     
-            // }
             toast({ title: "Phone number verified successfully!" });
         } catch (error) {
             console.error("Error verifying OTP:", error);
@@ -272,36 +473,225 @@ const page = (props: Props) => {
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        let unsubscribeFirestore = null;
+
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) {
-                    const userData = docSnap.data();
-                    setUserDetail(userData);
 
-                    setFormData({
-                        name: userData.name || "",
-                        location: userData.location || "",
-                        mobile: userData.mobile || "",
-                        email: userData.email || "",
-                        availability: userData.availability || "1 Month"
-                    });
-
-                    // Trigger OTP once user details are loaded
-                    // Replace with the correct phone number
+                // Cleanup any previous Firestore listener before attaching a new one
+                if (unsubscribeFirestore) {
+                    unsubscribeFirestore();
                 }
+
+                // Attach Firestore listener
+                unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+
+                        // Prevent unnecessary updates to `userDetail`
+                        setUserDetail((prev) =>
+                            _isEqual(prev, userData) ? prev : userData
+                        );
+
+                        // Handle last updated display
+                        const lastUpdated = userData?.lastUpdated?.seconds
+                            ? new Date(userData.lastUpdated.seconds * 1000)
+                            : null;
+
+                        if (lastUpdated) {
+                            const today = new Date();
+                            const isToday =
+                                lastUpdated.getDate() === today.getDate() &&
+                                lastUpdated.getMonth() === today.getMonth() &&
+                                lastUpdated.getFullYear() === today.getFullYear();
+
+                            setLastUpdatedDisplay((prev) => {
+                                const newDisplay = isToday
+                                    ? "Today"
+                                    : lastUpdated.toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                    });
+
+                                return prev === newDisplay ? prev : newDisplay;
+                            });
+                        }
+
+                        // Prevent unnecessary updates to `formData`
+                        const newFormData = {
+                            name: userData.name || "",
+                            location: userData.location || "",
+                            mobile: userData.mobile || "",
+                            email: userData.email || "",
+                            availability: userData.availability || "1 Month",
+                        };
+                        setFormData((prev) =>
+                            _isEqual(prev, newFormData) ? prev : newFormData
+                        );
+                    } else {
+                        // Clear user details if document doesn't exist
+                        setUserDetail(null);
+                    }
+                });
             } else {
+                // User is logged out; cleanup Firestore listener
+                if (unsubscribeFirestore) {
+                    unsubscribeFirestore();
+                    unsubscribeFirestore = null;
+                }
                 setUserDetail(null);
             }
         });
 
-        return () => unsubscribe();
+        // Cleanup all listeners on component unmount
+        return () => {
+            if (unsubscribeFirestore) {
+                unsubscribeFirestore();
+            }
+            unsubscribeAuth();
+        };
     }, []);
+
+
+    const handleDialogOpen = (id) => {
+        setOpenDialog(id);
+    };
+    const handleDialogDataChange = (e, fieldId) => {
+        setDialogData((prevData) => ({
+            ...prevData,
+            [fieldId]: e.target.value, // Update the specific field dynamically
+        }));
+    };
+
+    const handleDialogClose = () => {
+        setOpenDialog(null);
+        setFormData({});
+    };
+
+    const handleInputChange = (e, fieldId) => {
+        console.log(fieldId, e.target.value)
+        setFormData((prevData) => ({
+            ...prevData,
+            [fieldId]: e.target.value
+        }));
+    };
+
+    const saveHeadline = async (data) => {
+        console.log(data);
+        try {
+            await updateDoc(doc(db, "users", auth.currentUser?.uid), {
+                "resume.resumeheadline": data.headline,
+                lastUpdated: new Date(),
+            });
+            toast({ title: "Updated!" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
+    const saveProfileSummary = async () => {
+        console.log(dialogdata);
+        try {
+            await setDoc(doc(db, "users", auth.currentUser?.uid), {
+                profileSummary: dialogdata.summary,
+                lastUpdated: new Date(),
+            }, { merge: true });
+            toast({ title: "Summary added!" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
+
+    const saveKeySkills = async () => {
+        console.log(dialogdata);
+        try {
+            const userDoc = await getDoc(doc(db, "users", auth?.currentUser.uid));
+            const data = userDoc.data();
+
+            await setDoc(
+                doc(db, "users", auth.currentUser?.uid),
+                {
+                    lastUpdated: new Date(),
+                    skills: {
+                        keys: dialogdata.skills
+                    }
+
+                },
+                { merge: true } // Merge instead of overwriting
+            );
+            console.log('data exists true in keys')
+            toast({ title: "Skills Added" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
+    const links = [
+        {
+            id: 'resumeHeadline',
+            link: 'Add resume headline',
+            description: 'Add a summary of your resume to introduce yourself to recruiters',
+            headline: 'Resume Headline',
+            fields: [
+                { id: 'headline', label: 'Headline', placeholder: `${dialogdata.resumeheadline || 'Enter your resume headline'}`, maxLength: 100 }
+            ],
+            save: (data) => saveHeadline(data),
+        },
+        {
+            id: 'keySkills',
+            link: 'Add key skills',
+            description: 'Recruiters look for candidates with specific key skills',
+            headline: 'Key Skills',
+            fields: [], // No single input field; handled dynamically
+            save: saveKeySkills,
+        },
+        {
+            id: 'employment',
+            link: 'Add employment',
+            description: 'Your employment details will help recruiters understand your experience',
+            headline: 'Employment',
+            fields: [],
+            // save: saveEmployment,
+        },
+        {
+            id: 'profileSummary',
+            link: 'Add profile summary',
+            description: 'Highlight your key career achievements to help employers know your potential',
+            headline: 'Profile Summary',
+            fields: [
+                { id: 'summary', label: 'Profile Summary', placeholder: `${dialogdata.summary || 'Summarize your career achievements'}`, maxLength: 300 }
+            ],
+            save: saveProfileSummary,
+        }
+    ];
+    const handleSaveEmployment = () => {
+        const employment = dialogdata.employment;
+
+        // Basic validation can also be done here if desired
+        if (
+            !employment.company ||
+            !employment.jobTitle ||
+            !employment.joiningYear ||
+            !employment.joiningMonth
+        ) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
+        // Example: Displaying the saved data
+        console.log("Saved Employment Details:", employment);
+
+        // Close the dialog after saving
+        setOpenDialog("");
+    };
+
 
     return (
 
-        <div className="bg-[#f8f9fa] py-[15rem] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem]">
+        <div className="bg-[#f8f9fa] py-[15rem] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem]" >
             <div id="recaptcha-container"></div>
             <Dialog open={cropping} onOpenChange={setCropping}>
                 <DialogTrigger asChild>
@@ -334,16 +724,24 @@ const page = (props: Props) => {
                     </div>
                 </DialogContent>
             </Dialog>
+            {/*  */}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="max-w-[90%] sm:max-w-[500px] p-6 mx-auto max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Basic Details</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         {/* Name Field */}
                         <div>
                             <Label htmlFor="name">Name</Label>
-                            <Input id="name" placeholder="Your Name" required className="w-full" value={formData.name} onChange={handleInputChange} />
+                            <Input
+                                id="name"
+                                placeholder="Your Name"
+                                required
+                                className="w-full"
+                                value={formData.name}
+                                onChange={(e) => handleInputChange(e, 'name')}
+                            />
                         </div>
 
                         {/* Current Location */}
@@ -352,7 +750,14 @@ const page = (props: Props) => {
                             <DialogDescription className="text-sm text-gray-500">
                                 This helps us match you to relevant jobs.
                             </DialogDescription>
-                            <Input id="location" placeholder="Enter location" required className="w-full mt-2" value={formData.location} onChange={handleInputChange} />
+                            <Input
+                                id="location"
+                                placeholder="Enter location"
+                                required
+                                className="w-full mt-2"
+                                value={formData.location}
+                                onChange={(e) => handleInputChange(e, 'location')}
+                            />
                         </div>
 
                         {/* Mobile Number with Send OTP Button */}
@@ -368,11 +773,13 @@ const page = (props: Props) => {
                                     required
                                     className="w-full"
                                     value={formData.mobile}
-                                    onChange={handleInputChange}
+                                    onChange={(e) => handleInputChange(e, 'mobile')}
                                 />
                                 <Button
                                     type="button"
-                                    onClick={() => setupRecaptchaAndSendOTP(`+91${formData.mobile}`)}
+                                    onClick={() =>
+                                        setupRecaptchaAndSendOTP(`+91${formData.mobile}`)
+                                    }
                                 >
                                     Send OTP
                                 </Button>
@@ -405,7 +812,15 @@ const page = (props: Props) => {
                             <DialogDescription className="text-sm text-gray-500">
                                 We will send relevant jobs and updates to this email.
                             </DialogDescription>
-                            <Input id="email" type="email" placeholder="Your email address" required className="w-full" value={formData.email} onChange={handleInputChange} />
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="Your email address"
+                                required
+                                className="w-full"
+                                value={formData.email}
+                                onChange={(e) => handleInputChange(e, 'email')}
+                            />
                         </div>
 
                         {/* Availability to Join */}
@@ -414,8 +829,20 @@ const page = (props: Props) => {
                             <DialogDescription className="text-sm text-gray-500">
                                 Lets recruiters know your availability to join.
                             </DialogDescription>
-                            <RadioGroup value={formData.availability} onValueChange={handleAvailabilityChange} className="flex flex-col space-y-2 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 flex-wrap">
-                                {["15 Days or less", "1 Month", "2 Months", "3 Months", "More than 3 Months"].map((time) => (
+                            <RadioGroup
+                                value={formData.availability}
+                                onValueChange={(value) =>
+                                    handleInputChange({ target: { value } }, 'availability')
+                                }
+                                className="flex flex-col space-y-2 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 flex-wrap"
+                            >
+                                {[
+                                    '15 Days or less',
+                                    '1 Month',
+                                    '2 Months',
+                                    '3 Months',
+                                    'More than 3 Months',
+                                ].map((time) => (
                                     <div key={time} className="flex items-center space-x-2">
                                         <RadioGroupItem id={time} value={time} />
                                         <Label htmlFor={time}>{time}</Label>
@@ -431,21 +858,22 @@ const page = (props: Props) => {
                     </form>
                 </DialogContent>
             </Dialog>
-
-
-            <div className="bg-white  rounded-[20px] shadow-[0_0_20px_#e6e6e6b5]  pl-[30px] pr-5 py-5  w-[1120px] h-[265px] mx-auto flex items-center justify-around space-x-8">
+            <div className="bg-white  rounded-[20px] shadow-[0_0_20px_#e6e6e6b5]  pl-[30px] pr-5 py-5  w-[1149px] h-[265px] mx-auto flex items-center justify-around space-x-8">
                 {/* Profile Info Section */}
-                <div className="w-[9rem] flex items-center space-x-6" onClick={handleImageClick}>
+                <div className="w-[9rem] flex items-center space-x-6 overflow-hidden" onClick={handleImageClick}>
                     {/* Profile Image and Progress Ring */}
                     <CircularProgressbarWithChildren
                         counterClockwise={true}
                         strokeWidth={4}
-                        value={66}
+                        value={progress}
                         styles={{
                             path: { stroke: `#f05537`, strokeLinecap: 'round', transition: 'stroke-dashoffset 0.5s ease 0s' },
                             trail: { stroke: '#f7f7f9', strokeLinecap: 'round' },
                         }}
                     >
+                        <div className='flex items-center justify-center h-0 p-[13px] top-[123px] rounded-[10px] absolute bg-white z-10 shadow-md'>
+                            <span className="text-[#f05537] font-bold">{progress}%</span>
+                        </div>
                         <div className="relative w-[127px] h-[127px]">
                             <input
                                 type="file"
@@ -453,14 +881,19 @@ const page = (props: Props) => {
                                 style={{ display: "none" }}
                                 onChange={handleFileChange}
                             />
-                            <Image
-                                src={userDetail?.photoURL} // Default avatar if no image is available
-                                alt="Avatar"
-                                width={170}
-                                height={160}
-                                // onClick={handleImageClick}
-                                className="rounded-full object-cover"
-                            />
+                            {
+                                userDetail?.photoURL ? (<Image
+                                    src={userDetail?.photoURL} // Default avatar if no image is available
+                                    width={170}
+                                    height={160}
+                                    // onClick={handleImageClick}
+                                    className="rounded-full object-cover"
+                                />
+                                ) : (
+                                    <Skeleton className="w-[129px] h-[126px] rounded-full" />
+                                )
+                            }
+
                             {/* <input
                                 type="file"
                                 ref={fileInputRef}
@@ -479,109 +912,216 @@ const page = (props: Props) => {
                 </div>
                 {/* User Information */}
                 <div style={{
-                    marginLeft: "-75px",
+                    marginLeft: "-28px",
                 }}>
-                    <span className="flex"><h1 className="text-2xl font-semibold">{userDetail?.name}</h1>
+                    <span className="flex"><h1 className="text-2xl font-semibold">{userDetail?.name || <Skeleton className="w-[100px] h-[20px] rounded-sm" />
+                    }</h1>
                         <Pencil size={17} className="ml-2" onClick={() => setOpen(true)} />
                     </span>
-                    <span className="text-sm mt-1 flex "> <p className="text-[#7e85a1] mr-1">Profile last updated</p>  - 20px </span>
+                    <span className="text-sm mt-1 flex "> <p className="text-[#7e85a1] mr-1">Profile last updated - {lastUpdatedDisplay || < Skeleton className="w-[100px] h-[20px] rounded-full" />} </p>
+                    </span>
                     <hr className="mt-5 mb-5" />
                     <div className="flex flex-row justify-between gap-8 ">
                         <div className="wrapper">
-                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><MapPinHouse size={15} color="#474d6a" /> {userDetail?.location}</p>
-                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><BriefcaseBusiness size={15} color="#474d6a" /> Fresher</p>
-                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Calendar size={15} color="#474d6a" />  {userDetail?.availabilty}</p>
+                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><MapPinHouse size={15} color="#474d6a" /> {userDetail?.location || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
+                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><BriefcaseBusiness size={15} color="#474d6a" /> {<Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
+                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Calendar size={15} color="#474d6a" />  {userDetail?.availabilty || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
                         </div>
 
                         <div>
                             <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Phone size={15} color="#474d6a" />
-                                {userDetail?.mobile}</p>
+                                {userDetail?.mobile || <Skeleton className="w-[100px] h-[20px] rounded-full" />
+                                }</p>
                             <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Mail size={15} color="#474d6a" />
-                                {userDetail?.email}</p>
+                                {userDetail?.email || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
                         </div>
                     </div>
                 </div>
                 {/* Sidebar with Profile Suggestions */}
-                <div className="w-[380px] shadow-none h-[225px] bg-[#FFF2E3] relative m-0 p-5 rounded-[10px]">
-                    <div className="h-[128px] border-none">
-                        {/* items */}
-                        <div className="flex justify-between mb-3">
-                            <div className="flex gap-2 items-center justify-center">
-                                <span className="bg-white rounded-full p-2 items-center">
-                                    <MapPinHouse size={20} color="black" />
-                                </span>
-                                <span>
+                {unfilledFields.length > 0 ? (
 
-                                    Add preferred location
-                                </span>
-                            </div>
-                            <span></span>
-                        </div>
-                        <div className="flex justify-between mb-3">
-                            <div className="flex gap-2 items-center justify-center">
-                                <span className="bg-white rounded-full p-2 items-center">
-                                    <MapPinHouse size={20} color="black" />
-                                </span>
-                                <span>
+                    <div className="w-[380px] shadow-none h-[225px] bg-[#FFF2E3] overflow-hidden overflow-y-auto relative m-0 p-5 rounded-[10px]">
+                        <div className="h-[128px] border-none">
+                            {/* items */}
+                            {unfilledFields.map((field, index) => (
+                                <div className="flex justify-between mb-3">
+                                    <div className="flex gap-2 items-center justify-center">
+                                        <span className="bg-white rounded-full p-2 items-center">
+                                            <MapPinHouse size={20} color="black" />
+                                        </span>
+                                        <span>
 
-                                    Add preferred location
-                                </span>
-                            </div>
-                            <span></span>
-                        </div>
-                        <div className="flex justify-between mb-3">
-                            <div className="flex gap-2 items-center justify-center">
-                                <span className="bg-white rounded-full p-2 items-center">
-                                    <MapPinHouse size={20} color="black" />
-                                </span>
-                                <span>
+                                            {field} is missing
+                                        </span>
+                                    </div>
+                                    <span></span>
+                                </div>
 
-                                    Add preferred location
-                                </span>
+                            ))}
+                            {/* BUTTON */}
+                            <div className="flex items-center justify-center">
+                                <button
+                                    onClick={handleScrollToFirstMissingField}
+                                    className="h-10 font-bold text-white m-auto px-3.5 py-2.5 rounded-[60px] bg-[#f05537]">Add  {unfilledFields.length} missing details</button>
                             </div>
-                            <span></span>
-                        </div>
-                        {/* BUTTON */}
-                        <div className="flex items-center justify-center">
-                            <button className="h-10 font-bold text-white m-auto px-3.5 py-2.5 rounded-[60px] bg-[#f05537]">Add 10 missing details</button>
                         </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="w-[380px] shadow-none h-[225px] bg-[#fff] relative m-0 p-5 rounded-[10px]"> </div>
+                )}
+
             </div>
             <div className="flex flex-row justify-evenly pl-[30px] pr-5 py-5 ">
-                <QuickLinks />
-                <ResumeSection />
+                {comploading ? (
+                    <Skeleton className="w-[242px] h-[539px] rounded-lg" />
+
+                ) : (
+                    <QuickLinks handleDialogOpen={handleDialogOpen} />
+                )}
+                <div className="flex flex-col gap-3">
+                    <ResumeSection />
+                    {links.map((item) => (
+                        comploading ? (
+                            <Skeleton className="w-[860px] h-[108px] rounded-lg" />
+                        ) : (
+                            <Info
+                                key={item.id}
+                                headline={item.headline}
+                                link={item.link}
+                                description={item.description}
+                                onLinkClick={() => handleDialogOpen(item.id)}
+                            />
+                        )
+
+                    ))}
+                    {/* Dynamic Dialog Rendering */}
+                    {openDialog && (
+                        <Dialog open={!!openDialog} onOpenChange={handleDialogClose}>
+                            <DialogContent className="max-w-[90%] sm:max-w-[500px] p-6 mx-auto max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        {links.find(link => link.id === openDialog)?.headline || "Edit Details"}
+                                    </DialogTitle>
+                                </DialogHeader>
+
+                                <form>
+                                    {openDialog === 'keySkills' ? (
+                                        <KeySkillsInput skills={dialogdata.skills || []} setSkills={(skills) => {
+                                            setDialogData((prev) => ({ ...prev, skills }))
+                                            console.log(skills);
+                                        }
+                                        } />
+                                    ) : openDialog === 'employment' ? (
+                                        <></>
+                                    ) : (
+                                        links.find(link => link.id === openDialog)?.fields?.map((field) => (
+                                            <div key={field.id}>
+                                                <Label htmlFor={field.id}>{field.label}</Label>
+                                                <Input
+                                                    id={field.id}
+                                                    placeholder={field.placeholder}
+                                                    value={dialogdata[field.id] || ""}
+                                                    onChange={(e) => setDialogData((prev) => ({
+                                                        ...prev,
+                                                        [field.id]: e.target.value,
+                                                    }))}
+                                                    autoFocus={false}
+                                                    maxLength={field.maxLength}
+                                                    className="w-full"
+                                                />
+                                                {field.maxLength && (
+                                                    <p className="text-right text-gray-500 text-xs mt-1">
+                                                        {field.maxLength - (dialogdata[field.id]?.length || 0)} character(s) left
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+
+                                    <div className="flex justify-end gap-2 mt-4">
+                                        <Button type="button" variant="outline" onClick={handleDialogClose}>
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            onClick={() => {
+                                                const link = links.find(link => link.id === openDialog);
+                                                if (link && link.save) {
+                                                    link.save(dialogdata);
+                                                }
+                                                handleDialogClose();
+                                            }}
+                                        >
+                                            Save
+                                        </Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
+                    )}
+                </div>
             </div>
-        </div>
+        </div >
     )
 }
 
 export default page
-function QuickLinks() {
-    const links = [
-        { label: 'Resume', action: 'Upload' },
-        { label: 'Resume headline', action: 'Add' },
-        { label: 'Key skills', action: 'Add' },
-        { label: 'Education', action: 'Add' },
-        { label: 'IT skills', action: 'Add' },
-        { label: 'Projects', action: 'Add' },
-        { label: 'Profile summary', action: 'Add' },
-        { label: 'Accomplishments', action: '' },
-        { label: 'Career profile', action: '' },
+
+const Info = ({ headline, link, description, onLinkClick }) => (
+    <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8">
+        <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">{headline}</h2>
+            <span
+                onClick={onLinkClick}
+                className="float-right text-[#275df5] font-bold text-base cursor-pointer"
+            >
+                {link}
+            </span>
+        </div>
+        <p className="text-sm text-[#474d6a] mt-2">
+            {description}
+        </p>
+    </div>
+);
+
+function QuickLinks({ handleDialogOpen }) {
+    const quickLinks = [
+        { id: 'resume', label: 'Resume', action: 'Upload' },
+        { id: 'resumeHeadline', label: 'Resume headline', action: 'Add' },
+        { id: 'keySkills', label: 'Key skills', action: 'Add' },
+        { id: 'Employment', label: 'Employment', action: 'Add' },
+        { id: 'profileSummary', label: 'Profile summary', action: 'Add' },
     ];
 
     return (
-        <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5]  w-[242px] max-h-[539px] h-[539px]  p-6">
+        <div className="bg-white rounded-lg border border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
+            position: 'sticky',
+            top: '96px', // Adjust based on your nav height
+            alignSelf: 'start',
+        }}>
             <h3 className="text-lg font-semibold mb-4">Quick links</h3>
             <ul className="space-y-2">
-                {links.map((link, index) => (
-                    <li key={index} className="flex justify-between " style={{
-                        marginTop:"21px",
-                        margin
-                    }}>
+                {quickLinks.map((link) => (
+                    <li
+                        key={link.id}
+                        className="flex justify-between"
+                        style={{ marginTop: '21px', marginBottom: '21px' }}
+                    >
                         <span className="text-sm">{link.label}</span>
                         {link.action && (
-                            <a href="#" className="font-semibold text-sm text-[#275df5]">
+                            <a
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (link.id === 'resume') {
+                                        document.getElementById('resumeFileInput').click();
+                                        // Trigger upload function for Resume
+                                    } else {
+                                        handleDialogOpen(link.id); // Open dialog for others
+                                    }
+                                }}
+                                className="font-semibold text-sm text-[#275df5]"
+                            >
                                 {link.action}
                             </a>
                         )}
@@ -593,28 +1133,80 @@ function QuickLinks() {
 }
 
 
-
-
 function ResumeSection() {
     const [resumeFile, setResumeFile] = useState(null);
+    const [isUploaded, setIsUploaded] = useState(false);
+    const [uploadedFileName, setUploadedFileName] = useState(null);
+    const [uploadDate, setUploadDate] = useState(null);
+    const [downloadableURL, setDownloadableURL] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [resumeloading, setresumeloading] = useState(true);
     const { toast } = useToast();
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setResumeFile(file);
-            console.log('Selected file:', file.name);
-        }
-    };
+    const { sectionRefs, populateRefs } = useSectionRefs();
 
+    // Initialize refs
+    useEffect(() => {
+        const fields = ["resumeHeadline", "resumePath", "uploadSection"];
+        fields.forEach((field) => {
+            if (!sectionRefs.current[field]) {
+                sectionRefs.current[field] = React.createRef();
+            }
+        });
+    }, [sectionRefs]);
+
+    // Fetch resume status
+    useEffect(() => {
+        setresumeloading(true);
+        const fetchResumeStatus = async (user) => {
+            try {
+                const storagePath = `usersResume/${user.uid}/`;
+                const storageRef = ref(storage, storagePath);
+
+                const listResult = await listAll(storageRef);
+
+                if (listResult.items.length > 0) {
+                    setIsUploaded(true);
+                    const fileName = listResult.items[0].name;
+                    setUploadedFileName(fileName);
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        setUploadDate(data.resume.updatedate);
+                        setDownloadableURL(data.resume.resumepath);
+                    }
+                }
+                setresumeloading(false);
+            } catch (error) {
+                setresumeloading(false);
+                console.error("Error checking resume status:", error);
+            }
+        };
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                fetchResumeStatus(user);
+            } else {
+                console.error("User not authenticated.");
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
     const handleFileUploadClick = () => {
         document.getElementById('resumeFileInput').click();
     };
 
-    const handleUploadResume = async () => {
-        // Add your upload logic here
-        await uploadResume(resumeFile)
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setResumeFile(file);
+            handleUploadResume(file);
+        }
     };
-    const uploadResume = async (resumeFile) => {
+
+    const handleUploadResume = async (file) => {
         const user = auth.currentUser;
         if (!user) {
             console.error("No authenticated user found.");
@@ -622,135 +1214,213 @@ function ResumeSection() {
         }
 
         try {
-            // Define storage path for the resume
-            const storagePath = `usersResume/${user.uid}/${resumeFile.name}`;
-            const storageRef = ref(storage, storagePath); // Reference to the user's folder
+            const storagePath = `usersResume/${user.uid}/${file.name}`;
+            const storageRef = ref(storage, storagePath);
 
-            // List all files in the user's folder to delete any existing resumes
-            const listResult = await listAll(storageRef);
+            // Delete any existing files
+            const listResult = await listAll(storageRef.parent);
             for (const item of listResult.items) {
                 await deleteObject(item);
-                console.log(`Deleted: ${item.fullPath}`);
             }
 
-            // Set up reference and metadata for the new resume upload
-            const newResumeRef = ref(storage, `${storagePath}/${resumeFile.name}`);
-            const metadata = {
-                contentType: resumeFile.type, // Set MIME type correctly
-            };
-
-            const uploadTask = uploadBytesResumable(newResumeRef, resumeFile, metadata);
-
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            setIsUploading(true);
             uploadTask.on(
                 "state_changed",
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log(`Upload is ${progress}% done`);
-                    nProgress.start();
-                    nProgress.set(progress);
+                    setProgress(progress);
                 },
-                (err) => {
-                    console.error("Upload error:", err);
+                (error) => {
+                    toast({ variant: "destructive", title: "Upload failed", description: error.message });
                 },
                 async () => {
-                    console.log("Upload complete");
                     const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    console.log("Resume available at", downloadURL);
-
-                    // Update Firestore user profile with resume URL
-                    await updateDoc(doc(db, "users", user.uid), { resumeloc: downloadURL });
-
-                    // Show a toast message
+                    const uploadDate = new Date().toISOString();
+                    await updateDoc(doc(db, "users", user.uid), {
+                        lastUpdated: new Date(),
+                        resume: {
+                            resumepath: downloadURL,
+                            resumeheadline: null,
+                            updatedate: uploadDate,
+                        }
+                    });
                     toast({ title: "Resume uploaded successfully" });
-                    nProgress.done(true);
+                    setIsUploaded(true);
+                    setIsUploading(false);
+                    window.location.reload();
                 }
             );
         } catch (error) {
-            console.error("Error uploading resume:", error);
-            toast({
-                variant: "destructive",
-                title: "Upload failed",
-                description: error.message || "Failed to upload resume to Firebase",
-            });
+            toast({ variant: "destructive", title: "Upload failed", description: error.message });
         }
     };
 
+    const deleteFile = async () => {
+        const user = auth.currentUser;
+        if (!user || !uploadedFileName) {
+            console.error("No authenticated user found or no file to delete.");
+            return;
+        }
+
+        try {
+            const storagePath = `usersResume/${user.uid}/${uploadedFileName}`;
+            const storageRef = ref(storage, storagePath);
+
+            await deleteObject(storageRef);
+            await updateDoc(doc(db, "users", user.uid), {
+                lastUpdated: new Date(),
+                resume: {
+                    resumepath: null,
+                    resumeheadline: null,
+                    updatedate: null,
+                }
+            });
+
+            toast({ title: "Resume deleted successfully" });
+            setIsUploaded(false);
+            setUploadedFileName(null);
+            setDownloadableURL(null);
+            setUploadDate(null);
+        } catch (err) {
+            toast({ variant: "destructive", title: "Delete failed", description: err.message });
+        }
+    };
+    const handleDownload = async () => {
+        try {
+            const url = downloadableURL; // Get the download URL from Firebase
+
+            const xhr = new XMLHttpRequest();
+            xhr.responseType = 'blob'; // Expect a Blob in the response
+            xhr.onload = () => {
+                const blob = xhr.response;
+
+                // Convert the Blob into an object URL
+                const objectUrl = URL.createObjectURL(blob);
+
+                // Using the FileReader to read the Blob and initiate a download
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const downloadFileName = uploadedFileName; // Desired file name for download
+                    const fileBlob = reader.result;
+
+                    // Create an invisible link, set href to the object URL, and trigger download
+                    const link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.href = objectUrl;
+                    link.download = downloadFileName;
+
+                    document.body.appendChild(link);
+                    link.click(); // Automatically starts download
+                    document.body.removeChild(link);
+
+                    // Clean up Blob URL to free up memory
+                    URL.revokeObjectURL(objectUrl);
+                };
+                reader.readAsDataURL(blob); // Reads Blob as a data URL for download
+            };
+
+            xhr.open('GET', url);
+            xhr.send();
+        } catch (error) {
+            console.error("Failed to download file:", error);
+        }
+    };
     return (
-        <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Resume</h2>
-                <p className="text-green-600 font-medium">Add 10%</p>
-            </div>
-            <p className="text-gray-600 mt-2">
-                70% of recruiters discover candidates through their resume
-            </p>
+        <>
+            {resumeloading ? (<Skeleton className="w-[860px] h-[256px] rounded-lg" />) : (
+                <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8" ref={sectionRefs.current.resumePath} >
+                    {/* Header */}
+                    < div className="flex items-center justify-between" >
+                        <h2 className="text-base font-semibold">Resume</h2>
+                    </div >
 
-            {/* Create Resume Section */}
-            <div className="w-[51em] bg-pink-50 rounded-lg p-4 mt-4 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    {/* Resume Thumbnail */}
-                    <img
-                        src="https://via.placeholder.com/70x100"
-                        alt="Resume Thumbnail"
-                        className="w-20 h-28 rounded"
+
+                    {/* Conditional Content based on upload status */}
+
+                    {
+                        !isUploaded ? (
+                            <>
+                                <p className="text-sm text-[#474d6a] mt-2">
+                                    70% of recruiters discover candidates through their resume
+                                </p>
+                                <div
+                                    className="flex h-[106px] justify-center items-center flex-col border-[0.3px] border-dashed cursor-pointer mt-3.5 rounded-[10px]"
+                                    onClick={handleFileUploadClick}
+                                >
+                                    <p className="text-gray-600">
+                                        Already have a resume?{' '}
+                                        <span className="text-[#275df5] font-semibold">
+                                            Upload resume
+                                        </span>
+                                    </p>
+                                    {isUploading && (
+                                        <SimpleProgressBar progress={progress} />
+                                    )}
+                                    <p className="text-[#717b9e] text-sm">
+                                        Supported Formats: doc, docx, rtf, pdf, up to 2 MB
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div ref={sectionRefs.current.uploadSection} className="flex justify-between">
+                                    <div>
+                                        <p className="text-sm text-[#474d6a] mt-2">
+                                            {
+                                                uploadedFileName
+                                            }
+                                        </p>
+                                        <p className="text-sm text-[#474d6a] mt-2">Upload On: {uploadDate ? new Date(uploadDate).toLocaleString() : "Unknown"}</p>
+                                    </div>
+                                    <div className="flex justify-between gap-1">
+                                        <button onClick={handleDownload} className="flex justify-center items-center w-[38px] h-[37px] m-0 p-0 bg-[#f7f7f9] rounded-full cursor-pointer">
+                                            <CloudDownload size={20} color="#275df5" />
+                                        </button>
+                                        <div className="flex justify-center items-center w-[38px] h-[37px] m-0 p-0 bg-[#f7f7f9] rounded-full cursor-pointer" onClick={deleteFile}>
+                                            <Trash2 size={20} color="#275df5" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    className="flex h-[106px] justify-center items-center flex-col border-[0.3px] border-dashed cursor-pointer mt-3.5 rounded-[10px]"
+                                    onClick={handleFileUploadClick}
+                                >
+                                    <p className="text-gray-600">
+                                        <span className="text-[#275df5] font-semibold">
+                                            Update Resume
+                                        </span>
+                                    </p>
+                                    {isUploading && (
+                                        <SimpleProgressBar progress={progress} />
+                                    )}
+                                    <p className="text-[#717b9e] text-sm">
+                                        Supported Formats: doc, docx, rtf, pdf, up to 2 MB
+                                    </p>
+                                </div>
+                            </>
+                        )
+                    }
+
+                    {/* Hidden file input */}
+                    <input
+                        type="file"
+                        id="resumeFileInput"
+                        accept=".doc,.docx,.rtf,.pdf"
+                        className="hidden"
+                        onChange={handleFileChange}
                     />
-                    {/* Steps */}
-                    <div>
-                        <h3 className="text-lg font-semibold">
-                            Create your resume in 3 easy steps ✨
-                        </h3>
-                        <ul className="text-gray-600 text-sm mt-2 list-disc list-inside space-y-1">
-                            <li>Add the missing details in your profile</li>
-                            <li>Choose a template for your resume</li>
-                            <li>Improve the content with AI</li>
-                        </ul>
-                    </div>
                 </div>
-                {/* Create Resume Button */}
-                <button className="bg-blue-600 text-white py-2 px-4 rounded-md font-semibold">
-                    Create resume
-                </button>
-            </div>
 
-            {/* Upload Resume Section */}
-            <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-4 mt-4 text-center cursor-pointer"
-                onClick={handleFileUploadClick}
-            >
-                <p className="text-gray-600">
-                    Already have a resume?{' '}
-                    <span className="text-blue-600 font-semibold">
-                        Upload resume
-                    </span>
-                </p>
-                <p className="text-gray-500 text-sm mt-1">
-                    Supported Formats: doc, docx, rtf, pdf, up to 2 MB
-                </p>
-            </div>
-
-            {/* Hidden file input */}
-            <input
-                type="file"
-                id="resumeFileInput"
-                accept=".doc,.docx,.rtf,.pdf"
-                className="hidden"
-                onChange={handleFileChange}
-            />
-
-            {/* Upload Button (Visible after selecting a file) */}
-            {resumeFile && (
-                <div className="mt-4 flex justify-center">
-                    <Button onClick={handleUploadResume} className="bg-black text-white font-semibold">
-                        Upload Resume
-                    </Button>
-                </div>
             )}
-        </div>
+
+        </>
     );
+
+
 }
 
-// Helper function for cropping the image
+
 const getCroppedImg = async (imageSrc, pixelCrop) => {
     return new Promise((resolve, reject) => {
         const image = document.createElement('img'); // Create an img element
@@ -783,4 +1453,67 @@ const getCroppedImg = async (imageSrc, pixelCrop) => {
             reject(error);
         };
     });
+};
+const SimpleProgressBar = ({ progress = 0 }: { progress?: number }) => {
+    return (
+        <div className="py-1.5 h-6 relative">
+            <div className="absolute top-0 bottom-0 left-0 w-full h-full bg-[#eee]"></div>
+            <div
+                style={{
+                    width: `${progress}%`,
+                }}
+                className="absolute top-0 bottom-0 left-0 h-full transition-all duration-150 bg-blue"
+            ></div>
+            <div className="absolute top-0 bottom-0 left-0 flex items-center justify-center w-full h-full">
+                <span className="text-xs font-bold text-black">{progress}%</span>
+            </div>
+        </div>
+    );
+};
+
+const KeySkillsInput = ({ skills, setSkills }) => {
+    const [input, setInput] = useState('');
+
+    const handleKeyDown = (e) => {
+        if (e.key === ',' && input.trim() !== '') {
+            e.preventDefault();
+            setSkills([...skills, input.trim()]);
+            setInput('');
+        }
+    };
+
+    const removeSkill = (index) => {
+        setSkills(skills.filter((_, i) => i !== index));
+    };
+
+    return (
+        <div>
+            <Label htmlFor="skills">Key Skills</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+                {skills.map((skill, index) => (
+                    <div
+                        key={index}
+                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full flex items-center space-x-2"
+                    >
+                        <span>{skill}</span>
+                        <button
+                            type="button"
+                            onClick={() => removeSkill(index)}
+                            className="text-red-500 hover:text-red-700"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                ))}
+            </div>
+            <Input
+                id="skills"
+                placeholder="Enter your skills and press ','"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="mt-4 w-full"
+            />
+        </div>
+    );
 };
