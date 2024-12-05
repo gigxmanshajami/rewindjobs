@@ -198,7 +198,7 @@ const Page = (props: Props) => {
     
         setUnfilledFields(missingFields.map((field) => missingFieldLabels[field] || field));
     
-        populateRefs(missingFields);
+        // populateRefs(missingFields);
     
         return { progress: progressValue, missingFields }; // Ensure the function synchronously returns the result
     }, []);
@@ -1125,7 +1125,7 @@ const Page = (props: Props) => {
                             {/* BUTTON */}
                             <div className="flex items-center justify-center">
                                 <button
-                                    onClick={handleScrollToFirstMissingField}
+                                    // onClick={handleScrollToFirstMissingField}
                                     className="h-10 font-bold text-white m-auto px-3.5 py-2.5 rounded-[60px] bg-[#f05537]">Add  {unfilledFields.length} missing details</button>
                             </div>
                         </div>
