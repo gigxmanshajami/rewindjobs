@@ -144,8 +144,8 @@ const SignIn = () => {
               </Link>
             </div>
             <Button type="submit" className="w-full">
-              Sign In
-              {loading ? <LoaderCircle className="animate-spin mr-2" /> : "Register"}
+          
+              {loading ? <LoaderCircle className="animate-spin mr-2" /> : "Sign In"}
             </Button>
             <Button variant="outline" className="w-full" onClick={googleSign}>
               Sign in with Google

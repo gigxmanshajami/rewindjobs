@@ -11,7 +11,7 @@ const firebaseConfig = {
   storageBucket: "jobtracker-3b3a9.appspot.com",
   messagingSenderId: "469255399942",
   appId: "1:469255399942:web:eab06b2ccb14f20558b187",
-  measurementId: "G-M1BHZ6QY55"
+  measurementId: "G-M1BHZ6QY55",
 };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -23,4 +23,7 @@ if (storage) {
   console.log(false);
 }
 export const auth = getAuth(app);
-export { db, storage }; // Export Firestore and Storage
+
+
+// }
+export { db, storage,}; // Export Firestore and Storage

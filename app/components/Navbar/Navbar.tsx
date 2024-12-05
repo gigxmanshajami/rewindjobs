@@ -101,7 +101,7 @@ const Navbar = () => {
                         <Link href={'/'}>
                             <div className="flex flex-shrink-0 items-center">
                                 <img
-                                    className="block h-12 w-40 lg:hidden"
+                                    className="block h-12 w-40 lg:hidden mt-16"
                                     src={'/assets/logo/logo.png'}
                                     alt="Logo"
                                 />
@@ -138,21 +138,14 @@ const Navbar = () => {
                                             Profile
                                         </DropdownMenuItem>
                                     </Link>
-                                    <DropdownMenuItem>Billing</DropdownMenuItem>
-                                    <DropdownMenuItem>Settings</DropdownMenuItem>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem>Team</DropdownMenuItem>
-                                    <DropdownMenuItem>New Team</DropdownMenuItem>
                                 </DropdownMenuGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>GitHub</DropdownMenuItem>
-                                <DropdownMenuItem>Support</DropdownMenuItem>
+                                <DropdownMenuItem>Feedback</DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={logout}>
                                     Log out
-                                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                                    {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

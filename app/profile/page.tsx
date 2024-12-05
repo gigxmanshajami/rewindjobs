@@ -9,11 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, getAuth, PhoneAuthProvider, signInWithCredential, RecaptchaVerifier, linkWithCredential, reauthenticateWithCredential, updateProfile } from "firebase/auth";
 import { Textarea } from "@/components/ui/textarea"
-
+import { LoaderCircle, Router } from 'lucide-react';
 import { ref, deleteObject, listAll, uploadBytes, getDownloadURL, uploadBytesResumable, } from "firebase/storage";
 import { CircularProgressbarWithChildren } from 'react-circular-progressbar';
 import { debounce, } from 'lodash';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+
 import _isEqual from 'lodash/isEqual'
 import Link from 'next/link';
 import { FaCamera } from "react-icons/fa";
@@ -24,8 +25,10 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
+    DialogFooter,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
@@ -49,12 +52,21 @@ const missingFieldLabels = {
     "skills.keys": "Skills",
 };
 
-const page = (props: Props) => {
+const Page = (props: Props) => {
 
+    const [otp, setOtp] = useState("");  // OTP state
+    const [verificationId, setVerificationId] = useState("");  // Store Firebase OTP verification ID
+    const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false); // Control dialog visibility
+    const [countdown, setCountdown] = useState(40); // Countdown state for resend OTP
+    const [isResendDisabled, setIsResendDisabled] = useState(false); // Disable resend after 40 seconds
+    const [otpLoading, setOtpLoading] = useState(false);
+    const [otpLoadingtwo, setOtpLoadingtwo] = useState(false);
     const [comploading, setcomploading] = useState(false);
     const [openDialog, setOpenDialog] = useState(null);
+    const [prevFormData, setPrevFormData] = useState({});
     const [unfilledFields, setUnfilledFields] = useState([]);
-
+    const [verifiedMobile, setVerifiedMobile] = useState("");
+    const [mobileVerified, setMobileVerified] = useState(false);
     const [open, setOpen] = useState(false);
     const [openResumeHeadlineDialog, setOpenResumeHeadlineDialog] = useState(false);
     const [userDetail, setUserDetail] = useState(null);
@@ -67,8 +79,6 @@ const page = (props: Props) => {
     const [cropping, setCropping] = useState(false);
     const [progress, setProgress] = useState(0)
     const [cropArea, setCropArea] = useState(null);
-    const [verificationId, setVerificationId] = useState(null);
-    const [otp, setOtp] = useState("");
 
     const sectionRefs = useRef({}); // Store refs for each missing field
     const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
@@ -91,11 +101,14 @@ const page = (props: Props) => {
         });
     };
 
-    const skibdii = (skibidi) => {
-        return skibidi;
-    }
-    skibidi('skibidi');
+    useEffect(() => {
+        if (open == false) {
+            setFormData(prevFormData);
+        }
+    }, [open]);
+    
 
+    
     const fetchUserData = async (user) => {
         if (!user) {
             console.warn("No user provided for fetching data.");
@@ -119,7 +132,11 @@ const page = (props: Props) => {
                     return JSON.stringify(prev) !== JSON.stringify(updatedData) ? updatedData : prev;
                 });
 
-                setFormData(data);
+                // setFormData(data);
+                setPrevFormData(data)
+                setMobileVerified(data.mobileVerified);
+                setVerifiedMobile(data.mobile);
+                console.log(data);
                 return data;
             } else {
                 console.warn("No data found for the user.");
@@ -137,7 +154,7 @@ const page = (props: Props) => {
     };
 
 
-    const calculateProgress = useCallback(debounce((userData) => {
+    const calculateProgress = useCallback((userData) => {
         const fields = [
             "name",
             "email",
@@ -148,54 +165,124 @@ const page = (props: Props) => {
             "resume.resumeheadline",
             "resume.resumepath", // Nested field
         ];
-
+    
         const missingFields = [];
         const filledFields = fields.filter((field) => {
             const keys = field.split(".");
             let value = userData;
-
+    
             keys.forEach((key) => {
                 value = value?.[key];
             });
-
+    
             if (!value) {
                 missingFields.push(field);
             }
-
+    
             return !!value;
         });
-
+    
         const skillsKeys = userData?.skills?.keys;
         if (Array.isArray(skillsKeys) && skillsKeys.length > 0) {
             filledFields.push("skills.keys");
         } else {
             missingFields.push("skills.keys");
         }
-
+    
         const totalFields = fields.length + 1; // +1 for skills.keys field
         const progressValue = Math.round((filledFields.length / totalFields) * 100);
-
+    
         setProgress(progressValue);
-
+    
         setUnfilledFields(missingFields.map((field) => missingFieldLabels[field] || field));
-
+    
         populateRefs(missingFields);
-
-        return { progress: progressValue, missingFields };
-    }, 500), []); // Debounce for 500ms
-
+    
+        return { progress: progressValue, missingFields }; // Ensure the function synchronously returns the result
+    }, []);
+    
+    // Debounced version for side effects
+    const debouncedUpdateUserProgress = useCallback(
+        debounce(async (userId, userData) => {
+            try {
+                const { progress } = calculateProgress(userData); // Call the sync version
+                console.log(progress);
+                // Update progress in Firestore
+                const userDoc = doc(db, "users", userId);
+                await updateDoc(userDoc, { progress });
+                console.log(`User progress updated to ${progress}%`);
+            } catch (error) {
+                console.error("Error updating progress:", error);
+            }
+        }, 500), // Debounce for 500ms
+        [calculateProgress]
+    );
+    
     const updateUserProgress = async (userId, userData) => {
-        try {
-            const { progress } = calculateProgress(userData);
-
-            // Update progress in Firestore
-            const userDoc = doc(db, "users", userId);
-            await updateDoc(userDoc, { progress });
-            console.log(`User progress updated to ${progress}%`);
-        } catch (error) {
-            console.error("Error updating progress:", error);
-        }
+        // Call the debounced version for async updates
+        debouncedUpdateUserProgress(userId, userData);
     };
+    
+    // const calculateProgress = useCallback(debounce((userData) => {
+    //     const fields = [
+    //         "name",
+    //         "email",
+    //         "profileSummary",
+    //         "location",
+    //         "mobile",
+    //         "photoURL",
+    //         "resume.resumeheadline",
+    //         "resume.resumepath", // Nested field
+    //     ];
+
+    //     const missingFields = [];
+    //     const filledFields = fields.filter((field) => {
+    //         const keys = field.split(".");
+    //         let value = userData;
+
+    //         keys.forEach((key) => {
+    //             value = value?.[key];
+    //         });
+
+    //         if (!value) {
+    //             missingFields.push(field);
+    //         }
+
+    //         return !!value;
+    //     });
+
+    //     const skillsKeys = userData?.skills?.keys;
+    //     if (Array.isArray(skillsKeys) && skillsKeys.length > 0) {
+    //         filledFields.push("skills.keys");
+    //     } else {
+    //         missingFields.push("skills.keys");
+    //     }
+
+    //     const totalFields = fields.length + 1; // +1 for skills.keys field
+    //     const progressValue = Math.round((filledFields.length / totalFields) * 100);
+
+    //     setProgress(progressValue);
+
+    //     setUnfilledFields(missingFields.map((field) => missingFieldLabels[field] || field));
+
+    //     populateRefs(missingFields);
+
+    //     console.log(progressValue)
+    //     return { progress: progressValue, missingFields };
+    // }, 500), []); // Debounce for 500ms
+
+    // const updateUserProgress = async (userId, userData) => {
+    //     try {
+    //         const { progress } = calculateProgress(userData);
+    //         console.log(progress)
+    //         // Update progress in Firestore
+    //         const userDoc = doc(db, "users", userId);
+    //         await updateDoc(userDoc, { progress });
+    //         console.log(`User progress updated to ${progress}%`);
+    //     } catch (error) {
+    //         console.error("Error updating progress:", error);
+    //     }
+    // };
 
 
     const subscribeToUser = (userId) => {
@@ -381,6 +468,9 @@ const page = (props: Props) => {
         availability: "1 Month"
     });
 
+    useEffect(() => {
+        console.log(formData);
+    }, [formData])
     const [dialogdata, setDialogData] = useState({});
 
     const handleAvailabilityChange = (value) => {
@@ -449,28 +539,58 @@ const page = (props: Props) => {
         }
     };
 
-    // Function to verify OTP
-    const verifyOTP = async () => {
-        if (!verificationId || !otp) {
-            toast({
-                variant: "destructive",
-                title: "Invalid input",
-                description: "Please enter a valid OTP",
-            });
-            return;
-        }
+    const sendSMS = async (number) => {
+        setOtpLoadingtwo(true);
+        // setOtpLoading(true);
         try {
-            const credential = PhoneAuthProvider.credential(verificationId, otp);
-            toast({ title: "Phone number verified successfully!" });
+            const phoneNumber = number;
+            // Send the phone number to your backend API route to trigger OTP sending
+            const response = await fetch("/api/send-sms", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ phoneNumber }),
+            });
+
+            if (!response.ok) {
+                setOtpLoading(false);
+                throw new Error('Failed to send OTP');
+            } else {
+                setOtpLoading(false);
+            }
+
+            const data = await response.json();
+
+            setVerificationId(data.verificationId);  // Save the verification ID from Twilio
+            setIsOtpDialogOpen(true);  // Automatically open the OTP dialog
+            setOpen(false)
+            // Start countdown for 40 seconds
+            setIsResendDisabled(true);
+            const timer = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev === 1) {
+                        clearInterval(timer);
+                        setIsResendDisabled(false); // Enable Resend OTP after 40 seconds
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
         } catch (error) {
-            console.error("Error verifying OTP:", error);
+            console.error("Error sending OTP:", error);
             toast({
                 variant: "destructive",
-                title: "OTP Verification Failed",
-                description: error.message || "The OTP entered is incorrect",
+                title: "Error",
+                description: "An error occurred while sending the otp",
             });
+            setOtpLoadingtwo(false);
+            // setOtpLoading(false);
+        }finally{
+            setOtpLoadingtwo(false);
         }
     };
+
 
     useEffect(() => {
         let unsubscribeFirestore = null;
@@ -687,7 +807,64 @@ const page = (props: Props) => {
         // Close the dialog after saving
         setOpenDialog("");
     };
+    const handleOTPSubmit = async () => {
+        try {
+            setOtpLoading(true);
+            const verificationResponse = await fetch("/api/verify-sms", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ code: otp, phoneNumber: '+91' + formData.mobile, }),
+            });
 
+            if (!verificationResponse.ok) {
+                throw new Error("Failed to verify OTP");
+            }
+
+            const data = await verificationResponse.json();
+
+            if (data.status === "approved") {
+                // setOtpLoading(false);
+                toast({
+                    title: "Verified",
+                    description: "Phone Number Verified successfully",
+                });
+                // Proceed with registration (or login) after OTP verification
+                await setDoc(doc(db, "users", auth.currentUser?.uid), {
+                    mobile: formData.mobile,
+                    mobileVerified: true,
+                }, { merge: true });
+                toast({
+                    title: "Verified",
+                    description: "User Verified Successfully....",
+                });
+            setOtpLoading(false);
+            setIsOtpDialogOpen(false)
+            window.location.reload();
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "An error occurred while verifying the otp",
+                });
+                window.location.reload();
+                setOtpLoading(false);
+            }
+        } catch (error) {
+            console.error("Error verifying OTP:", error);
+            // setOtpLoading(false);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "An error occurred while verifying the otp",
+            });
+            setOtpLoading(false);
+
+        }finally{
+            setOtpLoading(false);
+        }
+    };
 
     return (
 
@@ -725,7 +902,7 @@ const page = (props: Props) => {
                 </DialogContent>
             </Dialog>
             {/*  */}
-            <Dialog open={open} onOpenChange={setOpen}>
+            <Dialog open={open} onOpenChange={setOpen}  >
                 <DialogContent className="max-w-[90%] sm:max-w-[500px] p-6 mx-auto max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Basic Details</DialogTitle>
@@ -766,7 +943,7 @@ const page = (props: Props) => {
                             <DialogDescription className="text-sm text-gray-500">
                                 Recruiters will contact you on this number.
                             </DialogDescription>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-col">
                                 <Input
                                     id="mobile"
                                     placeholder="Your mobile number"
@@ -775,35 +952,23 @@ const page = (props: Props) => {
                                     value={formData.mobile}
                                     onChange={(e) => handleInputChange(e, 'mobile')}
                                 />
-                                <Button
-                                    type="button"
-                                    onClick={() =>
-                                        setupRecaptchaAndSendOTP(`+91${formData.mobile}`)
-                                    }
-                                >
-                                    Send OTP
-                                </Button>
+                                {
+                                    (formData.mobile !== "" && (formData.mobile !== verifiedMobile || mobileVerified === false)) && (
+                                        otpLoadingtwo ? (
+                                            <LoaderCircle size={24} className="animate-spin" />
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="link"
+                                                className="w-fit"
+                                                onClick={() => sendSMS(`+91${formData.mobile}`)}
+                                            >
+                                                Verify Number?
+                                            </Button>
+                                        )
+                                    )
+                                }
                             </div>
-                        </div>
-
-                        {/* OTP Input */}
-                        <div>
-                            <Label htmlFor="otp">Enter OTP</Label>
-                            <Input
-                                id="otp"
-                                placeholder="Enter OTP"
-                                required
-                                className="w-full"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                            />
-                            <Button
-                                type="button"
-                                onClick={verifyOTP}
-                                className="mt-2"
-                            >
-                                Verify OTP
-                            </Button>
                         </div>
 
                         {/* Email Address */}
@@ -829,26 +994,23 @@ const page = (props: Props) => {
                             <DialogDescription className="text-sm text-gray-500">
                                 Lets recruiters know your availability to join.
                             </DialogDescription>
-                            <RadioGroup
+
+                            <Select
                                 value={formData.availability}
-                                onValueChange={(value) =>
-                                    handleInputChange({ target: { value } }, 'availability')
-                                }
-                                className="flex flex-col space-y-2 mt-2 sm:flex-row sm:space-y-0 sm:space-x-4 flex-wrap"
+                                onValueChange={(value) => handleInputChange({ target: { value } }, 'availability')}
                             >
-                                {[
-                                    '15 Days or less',
-                                    '1 Month',
-                                    '2 Months',
-                                    '3 Months',
-                                    'More than 3 Months',
-                                ].map((time) => (
-                                    <div key={time} className="flex items-center space-x-2">
-                                        <RadioGroupItem id={time} value={time} />
-                                        <Label htmlFor={time}>{time}</Label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select your availability" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="15 Days or less">15 Days or less</SelectItem>
+                                    <SelectItem value="1 Month">1 Month</SelectItem>
+                                    <SelectItem value="2 Months">2 Months</SelectItem>
+                                    <SelectItem value="3 Months">3 Months</SelectItem>
+                                    <SelectItem value="More than 3 Months">More than 3 Months</SelectItem>
+                                </SelectContent>
+                            </Select>
+
                         </div>
 
                         {/* Save Button */}
@@ -924,8 +1086,8 @@ const page = (props: Props) => {
                     <div className="flex flex-row justify-between gap-8 ">
                         <div className="wrapper">
                             <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><MapPinHouse size={15} color="#474d6a" /> {userDetail?.location || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
-                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><BriefcaseBusiness size={15} color="#474d6a" /> {<Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
-                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Calendar size={15} color="#474d6a" />  {userDetail?.availabilty || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
+                            {/* <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><BriefcaseBusiness size={15} color="#474d6a" /> {<Skeleton className="w-[100px] h-[20px] rounded-full" />}</p> */}
+                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Calendar size={15} color="#474d6a" />  {userDetail?.availability|| <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
                         </div>
 
                         <div>
@@ -944,7 +1106,7 @@ const page = (props: Props) => {
                         <div className="h-[128px] border-none">
                             {/* items */}
                             {unfilledFields.map((field, index) => (
-                                <div className="flex justify-between mb-3">
+                                <div className="flex justify-between mb-3" key={index}>
                                     <div className="flex gap-2 items-center justify-center">
                                         <span className="bg-white rounded-full p-2 items-center">
                                             <MapPinHouse size={20} color="black" />
@@ -982,7 +1144,7 @@ const page = (props: Props) => {
                     <ResumeSection />
                     {links.map((item) => (
                         comploading ? (
-                            <Skeleton className="w-[860px] h-[108px] rounded-lg" />
+                            <Skeleton className="w-[860px] h-[108px] rounded-lg" key={item.id}/>
                         ) : (
                             <Info
                                 key={item.id}
@@ -1059,13 +1221,64 @@ const page = (props: Props) => {
                         </Dialog>
 
                     )}
+                    {/* OTP Dialog */}
+                    <Dialog open={isOtpDialogOpen} onOpenChange={() => setIsOtpDialogOpen(!isOtpDialogOpen)}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Enter OTP</DialogTitle>
+                                <div>OTP sent to +91{formData.mobile}</div>
+                            </DialogHeader>
+                            <div className='flex items-center justify-center '>
+                                <InputOTP
+                                    maxLength={6}
+                                    value={otp}
+                                    onChange={(value) => setOtp(value)}
+                                >
+                                    <InputOTPGroup>
+                                        <InputOTPSlot index={0} />
+                                        <InputOTPSlot index={1} />
+                                        <InputOTPSlot index={2} />
+                                        <InputOTPSlot index={3} />
+                                        <InputOTPSlot index={4} />
+                                        <InputOTPSlot index={5} />
+                                    </InputOTPGroup>
+                                </InputOTP>
+                            </div>
+                            <DialogFooter style={{
+                                flexDirection: 'column',
+                            }} >
+                                <Button
+                                    onClick={handleOTPSubmit}
+                                    disabled={otpLoading}
+                                >
+                                    {otpLoading ? (
+                                        <LoaderCircle size={24} className="animate-spin" />
+                                    ) : (
+                                        "Verify OTP"
+                                    )}
+                                </Button>
+                                <div className="text-xs text-center mt-4">
+                                    Resend OTP in {countdown} seconds
+                                    <br />
+                                    <Button
+                                        className="mt-2"
+                                        variant='link'
+                                        onClick={() => sendSMS(`+91${formData.mobile}`)}
+                                        disabled={isResendDisabled}
+                                    >
+                                        Resend OTP
+                                    </Button>
+                                </div>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
         </div >
     )
 }
 
-export default page
+export default Page
 
 const Info = ({ headline, link, description, onLinkClick }) => (
     <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8">
@@ -1094,7 +1307,7 @@ function QuickLinks({ handleDialogOpen }) {
     ];
 
     return (
-        <div className="bg-white rounded-lg border border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
+        <div className="bg-white rounded-lg border h-screen border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
             position: 'sticky',
             top: '96px', // Adjust based on your nav height
             alignSelf: 'start',
