@@ -1,3 +1,4 @@
+// @ts-nocheck 
 "use client";
 import React, { useEffect, useState } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth';

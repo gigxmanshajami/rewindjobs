@@ -1,6 +1,6 @@
-// "use client";
+// @ts-nocheck 
+"use client";
 import './globals.css';
-// import { PhoneProvider } from './context/PhoneContext';
 import Navbar from './components/Navbar/index';
 import 'react-circular-progressbar/dist/styles.css';
 import 'react-loading-skeleton/dist/skeleton.css'

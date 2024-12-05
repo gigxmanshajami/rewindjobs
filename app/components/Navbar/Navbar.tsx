@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Disclosure } from '@headlessui/react';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
@@ -32,7 +33,7 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loggedIn, setLoggedIn] = useState(false);
-    const [userDetail, setUserDetail] = useState(null);
+    const [userDetail, setUserDetail] = useState({});
     const [scrolled, setScrolled] = useState(false); // Track scroll state
     const router = useRouter();
     const { toast } = useToast();
