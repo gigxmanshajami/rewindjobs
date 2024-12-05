@@ -1,6 +1,6 @@
 // "use client";
 import './globals.css';
-import { PhoneProvider } from './context/PhoneContext';
+// import { PhoneProvider } from './context/PhoneContext';
 import Navbar from './components/Navbar/index';
 import 'react-circular-progressbar/dist/styles.css';
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -28,14 +28,10 @@ export default function RootLayout({
           speed={8}
           showSpinner={false}
         />
-        <PhoneProvider> {/* Ensure this is inside AuthContextProvider if AuthContext needs it */}
-          {/* <SectionRefsProvider> */}
-            <Navbar />
-            {children}
-            <Toaster />
-            <Footer />
-          {/* </SectionRefsProvider> */}
-        </PhoneProvider>
+        <Navbar />
+        {children}
+        <Toaster />
+        <Footer />
       </body>
     </html>
   )
