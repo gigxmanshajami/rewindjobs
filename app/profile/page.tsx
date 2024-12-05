@@ -1579,7 +1579,7 @@ function ResumeSection() {
                             </>
                         ) : (
                             <>
-                                <div ref={sectionRefs.current.uploadSection} className="flex justify-between">
+                                <div  className="flex justify-between">
                                     <div>
                                         <p className="text-sm text-[#474d6a] mt-2">
                                             {
