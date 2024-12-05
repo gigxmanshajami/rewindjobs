@@ -1,5 +1,5 @@
 // @ts-nocheck 
-"use client";
+// "use client";
 import './globals.css';
 import Navbar from './components/Navbar/index';
 import 'react-circular-progressbar/dist/styles.css';
