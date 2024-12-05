@@ -15,6 +15,7 @@ import { ToastAction } from "@/components/ui/toast"
 // import { toast } from 'react-toastify';
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from 'next/navigation';
+import cookies from 'js-cookie';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -79,6 +80,7 @@ const Navbar = () => {
                 title: "Success",
                 description: "User logged out successfully",
             });
+            cookies.remove('token');
             router.push('/signin');
         } catch (err) {
             console.error("Error during logout:", err);
