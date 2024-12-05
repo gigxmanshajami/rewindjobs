@@ -8,7 +8,6 @@ import { Toaster } from "@/components/ui/toaster"
 import NextTopLoader from 'nextjs-toploader';
 
 import Footer from './components/Footer/Footer';
-// import { SectionRefsProvider } from './SectionRefsContext';
 export const metadata = {
   title: 'RewindJobs',
   description: 'Rewind Jobs',

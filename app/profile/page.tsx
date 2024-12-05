@@ -36,7 +36,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useRouter } from 'next/navigation';
 import Cropper from 'react-easy-crop';
 import { Badge } from "@/components/ui/badge";
-import { useSectionRefs } from "../SectionRefsContext";
+// import { useSectionRefs } from "../SectionRefsContext
 import { format } from 'date-fns';
 import { Console } from "console";
 type Props = {}
@@ -80,7 +80,7 @@ const Page = (props: Props) => {
     const [progress, setProgress] = useState(0)
     const [cropArea, setCropArea] = useState(null);
 
-    const sectionRefs = useRef({}); // Store refs for each missing field
+    // const sectionRefs = useRef({}); // Store refs for each missing field
     const [lastUpdatedDisplay, setLastUpdatedDisplay] = useState("");
     const [employmentDetails, setEmploymentDetails] = useState({});
 
@@ -93,13 +93,13 @@ const Page = (props: Props) => {
     };
 
     // Populate refs for each field
-    const populateRefs = (fields) => {
-        fields.forEach((field) => {
-            if (!sectionRefs.current[field]) {
-                sectionRefs.current[field] = React.createRef();
-            }
-        });
-    };
+    // const populateRefs = (fields) => {
+    //     fields.forEach((field) => {
+    //         if (!sectionRefs.current[field]) {
+    //             sectionRefs.current[field] = React.createRef();
+    //         }
+    //     });
+    // };
 
     useEffect(() => {
         if (open == false) {
@@ -330,21 +330,21 @@ const Page = (props: Props) => {
         initialize();
     }, []); // Empty dependency array ensures this runs once on mount
 
-    const handleScrollToFirstMissingField = () => {
-        // Find the first missing field using unfilledFields
-        const firstMissingFieldKey = unfilledFields[0];
+    // const handleScrollToFirstMissingField = () => {
+    //     // Find the first missing field using unfilledFields
+    //     const firstMissingFieldKey = unfilledFields[0];
 
-        if (firstMissingFieldKey) {
-            const firstMissingFieldRef = sectionRefs.current[firstMissingFieldKey];
+    //     if (firstMissingFieldKey) {
+    //         const firstMissingFieldRef = sectionRefs.current[firstMissingFieldKey];
 
-            if (firstMissingFieldRef && firstMissingFieldRef.current) {
-                firstMissingFieldRef.current.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center", // Scroll to the center of the screen
-                });
-            }
-        }
-    };
+    //         if (firstMissingFieldRef && firstMissingFieldRef.current) {
+    //             firstMissingFieldRef.current.scrollIntoView({
+    //                 behavior: "smooth",
+    //                 block: "center", // Scroll to the center of the screen
+    //             });
+    //         }
+    //     }
+    // };
 
     const handleImageClick = () => {
         fileInputRef.current.click();
@@ -1356,17 +1356,17 @@ function ResumeSection() {
     const [progress, setProgress] = useState(0);
     const [resumeloading, setresumeloading] = useState(true);
     const { toast } = useToast();
-    const { sectionRefs, populateRefs } = useSectionRefs();
+    // const { sectionRefs, populateRefs } = useSectionRefs();
 
     // Initialize refs
-    useEffect(() => {
-        const fields = ["resumeHeadline", "resumePath", "uploadSection"];
-        fields.forEach((field) => {
-            if (!sectionRefs.current[field]) {
-                sectionRefs.current[field] = React.createRef();
-            }
-        });
-    }, [sectionRefs]);
+    // useEffect(() => {
+    //     const fields = ["resumeHeadline", "resumePath", "uploadSection"];
+    //     fields.forEach((field) => {
+    //         if (!sectionRefs.current[field]) {
+    //             sectionRefs.current[field] = React.createRef();
+    //         }
+    //     });
+    // }, [sectionRefs]);
 
     // Fetch resume status
     useEffect(() => {
@@ -1542,7 +1542,7 @@ function ResumeSection() {
     return (
         <>
             {resumeloading ? (<Skeleton className="w-[860px] h-[256px] rounded-lg" />) : (
-                <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8" ref={sectionRefs.current.resumePath} >
+                <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8"  >
                     {/* Header */}
                     < div className="flex items-center justify-between" >
                         <h2 className="text-base font-semibold">Resume</h2>
