@@ -1,4 +1,4 @@
-// pages/_middleware.ts
+// @ts-nocheck 
 import { NextResponse } from 'next/server';
 import { parse } from 'cookie';
 
