@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import cookies from 'js-cookie';
 import { LoaderCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Image from 'next/image';
@@ -49,6 +50,10 @@ const SignIn = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      const idToken = await user.getIdToken();
+
+      // Store the token in a cookie (expires in 1 day)
+      cookies.set('token', idToken, { expires: 1 });
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
@@ -81,7 +86,10 @@ const SignIn = () => {
       const user = credential.user;
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
+      const idToken = await user.getIdToken();
 
+      // Store the token in a cookie (expires in 1 day)
+      cookies.set('token', idToken, { expires: 1 });
       if (userDocSnap.exists()) {
         toast({ title: "User signed in successfully" });
         router.push("/profile");
@@ -145,7 +153,7 @@ const SignIn = () => {
               </Link>
             </div>
             <Button type="submit" className="w-full">
-          
+
               {loading ? <LoaderCircle className="animate-spin mr-2" /> : "Sign In"}
             </Button>
             <Button variant="outline" className="w-full" onClick={googleSign}>

@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"; // Import ShadCN OTP components
-
+import cookies from 'js-cookie';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -136,6 +136,10 @@ const RegistrationPage = () => {
         });
         // Proceed with registration (or login) after OTP verification
         const { user } = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        const idToken = await user.getIdToken();
+
+        // Store the token in a cookie (expires in 1 day)
+        cookies.set('token', idToken, { expires: 1 });
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           name: formData.fullName,
@@ -210,6 +214,10 @@ const RegistrationPage = () => {
             keys: [],
           },
         });
+        const idToken = await user.getIdToken();
+
+        // Store the token in a cookie (expires in 1 day)
+        cookies.set('token', idToken, { expires: 1 });
         // uid: user.uid,
         // name: formData.fullName,
         // email: formData.email,

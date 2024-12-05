@@ -41,10 +41,10 @@ const Banner = () => {
                     alt="Astronaut in the air"
                     width={584}
                     style={{
-                        height: "400px !important",
+                        height: "422px !important",
                     }}
                     // className="animate-ping"
-                    height={400}
+                    height={422}
                 // sizes="(max-width: 800px) 100vw, 620px"
                 // loading="eager"
                 // format="avif"
