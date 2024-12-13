@@ -1036,7 +1036,7 @@ const Page = (props: Props) => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ code: otp, phoneNumber: '+91' + formData.mobile, }),
+                body: JSON.stringify({ code: otp, phoneNumber:  tempNumber, }),
             });
 
             if (!verificationResponse.ok) {
@@ -1053,7 +1053,7 @@ const Page = (props: Props) => {
                 });
                 // Proceed with registration (or login) after OTP verification
                 await setDoc(doc(db, "users", auth.currentUser?.uid), {
-                    mobile: formData.mobile,
+                    mobile: tempNumber,
                     mobileVerified: true,
                 }, { merge: true });
                 toast({
@@ -1937,6 +1937,7 @@ function ResumeSection() {
                 "state_changed",
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log(progress)
                     setProgress(progress);
                 },
                 (error) => {
@@ -2064,7 +2065,8 @@ function ResumeSection() {
                                     </p>
                                     {isUploading && (
                                         // <Progress value={progress} className="w-[375px]" />
-                                        { progress }
+                                        // { progress }
+                                        <span>{progress}</span>
                                     )}
                                     <p className="text-[#717b9e] text-sm">
                                         Supported Formats: doc, docx, rtf, pdf, up to 2 MB
@@ -2102,7 +2104,8 @@ function ResumeSection() {
                                     </p>
                                     {isUploading && (
                                         // <Progress value={progress} className="w-[375px]" />
-                                        { progress }
+                                        <span>{progress}</span>
+
 
                                     )}
                                     <p className="text-[#717b9e] text-sm">
