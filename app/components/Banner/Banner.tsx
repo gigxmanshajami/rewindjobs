@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Signdialog from "@/app/components/Navbar/Signdialog";
 import Registerdialog from "@/app/components/Navbar/Registerdialog";
 import IconCloud from "@/components/ui/icon-cloud";
-import { VelocityScroll } from "@/components/ui/scroll-based-velocity";
+// import { VelocityScroll } from "@/components/ui/scroll-based-velocity";
 const Banner = () => {
     const slugs = [
         "msexcel",

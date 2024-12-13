@@ -24,7 +24,6 @@ import { ref, deleteObject, listAll, uploadBytes, getDownloadURL, uploadBytesRes
 import { CircularProgressbarWithChildren } from 'react-circular-progressbar';
 import { debounce, } from 'lodash';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import AnimatedCircularProgressBar from "@/components/magicui/animated-circular-progress-bar";
 import _isEqual from 'lodash/isEqual'
 import Link from 'next/link';
 import { FaCamera } from "react-icons/fa";
