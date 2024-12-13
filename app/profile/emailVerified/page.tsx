@@ -30,29 +30,19 @@ const EmailVerified = () => {
                 return;
             }
             // Check if the user's email is verified
-            const data = await getDoc(doc(db, 'user', user.uid));
-            const datas = data.data();
-            if (data.exists() && datas.emailVerified === false) {
-                try {
-                    const userDocRef = doc(db, 'users', uid);
-                    await setDoc(userDocRef, {
-                        emailVerified: true,
-                    }, { merge: true }); // Merge to avoid overwriting other data
+            try {
+                const userDocRef = doc(db, 'users', uid);
+                await setDoc(userDocRef, {
+                    emailVerified: true,
+                }, { merge: true }); // Merge to avoid overwriting other data
 
-                    // After the update, mark the operation as successful
-                    setSuccess(true);
-                } catch (error) {
-                    setError('Error verifying email.');
-                } finally {
-                    setLoading(false);
-                }
-            } else {
+                // After the update, mark the operation as successful
+                setSuccess(true);
+            } catch (error) {
+                setError('Error verifying email.');
+            } finally {
                 setLoading(false);
-                alert('Email is already verified');
-                window.location.href = '/profile';
             }
-
-
         };
 
         if (uid) {
