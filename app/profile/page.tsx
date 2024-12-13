@@ -1325,7 +1325,7 @@ const Page = (props: Props) => {
                                                             className="animate-spin"
                                                         />
                                                     ) : (
-                                                        <MapPinHouse size={13}/>
+                                                        <MapPinHouse size={13} />
                                                     )}
 
                                                 </button>
@@ -2063,7 +2063,8 @@ function ResumeSection() {
                                         </span>
                                     </p>
                                     {isUploading && (
-                                        <Progress value={progress} className="w-[375px]" />
+                                        // <Progress value={progress} className="w-[375px]" />
+                                        { progress }
                                     )}
                                     <p className="text-[#717b9e] text-sm">
                                         Supported Formats: doc, docx, rtf, pdf, up to 2 MB
@@ -2100,7 +2101,9 @@ function ResumeSection() {
                                         </span>
                                     </p>
                                     {isUploading && (
-                                        <Progress value={progress} className="w-[375px]" />
+                                        // <Progress value={progress} className="w-[375px]" />
+                                        { progress }
+
                                     )}
                                     <p className="text-[#717b9e] text-sm">
                                         Supported Formats: doc, docx, rtf, pdf, up to 2 MB
