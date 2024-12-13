@@ -1803,7 +1803,7 @@ function QuickLinks({ handleDialogOpen }) {
     ];
 
     return (
-        <div className="bg-white rounded-lg border h-screen border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
+        <div className="bg-white rounded-lg border  border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
             position: 'sticky',
             top: '96px', // Adjust based on your nav height
             alignSelf: 'start',
@@ -2162,22 +2162,6 @@ const getCroppedImg = async (imageSrc, pixelCrop) => {
             reject(error);
         };
     });
-};
-const SimpleProgressBar = ({ progress = 0 }: { progress?: number }) => {
-    return (
-        <div className="py-1.5 h-6 relative">
-            <div className="absolute top-0 bottom-0 left-0 w-full h-full bg-[#eee]"></div>
-            <div
-                style={{
-                    width: `${progress}%`,
-                }}
-                className="absolute top-0 bottom-0 left-0 h-full transition-all duration-150 bg-blue"
-            ></div>
-            <div className="absolute top-0 bottom-0 left-0 flex items-center justify-center w-full h-full">
-                <span className="text-xs font-bold text-black">{progress}%</span>
-            </div>
-        </div>
-    );
 };
 
 const KeySkillsInput = ({ skills, setSkills }) => {
