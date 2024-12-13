@@ -1,13 +1,4 @@
-// @ts-nocheck 
 
-import React from 'react'
-
-type Props = {}
-
-const page = (props: Props) => {
-    return (
-        <div className='text-sm p-10'>
-            <p>
                 Privacy Policy
                 1. Introduction
 
@@ -230,8 +221,4 @@ const page = (props: Props) => {
                 Cookie settings in Chrome
                 Cookie settings in Safari
                 More information: To find out more about cookies, including how to see what cookies have been set and how to manage and delete them, visit www.allaboutcookies.org. You can learn more about opting out of receiving interest-based ads from other companies at optout.aboutads.info and www.networkadvertising.org/choices. In addition, certain third party advertising networks, like Facebook (pixels) and Google, permit users to opt out of or customize preferences associated with your internet browsing. To learn more about this feature from Google, click here. For further information about the Facebook Pixel, click here.
-            </p>
-        </div>
-    )
-}
-export default page;
+    

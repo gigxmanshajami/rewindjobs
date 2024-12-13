@@ -1,13 +1,4 @@
-// @ts-nocheck 
 
-import React from 'react'
-
-type Props = {}
-
-const page = (props: Props) => {
-    return (
-        <div className='text-sm p-10'>
-            <p>
                 Terms and Conditions
                 PURPOSE:
 
@@ -597,8 +588,4 @@ const page = (props: Props) => {
                 Top
 
                 Note: The terms in this agreement may be changed by Info Edge at any time. Info Edge is free to offer its services to any client/prospective client without restriction.
-            </p>
-        </div>
-    )
-}
-export default page;
+      

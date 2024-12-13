@@ -85,9 +85,9 @@ const footer = () => {
                     <div className="flex justify-between">
                         <h4 className='text-black text-sm text-center lg:text-start font-normal'>@2024 All Rights Reserved By RewindJobs</h4>
                         <div className="flex gap-5 mt-5 lg:mt-0 justify-center lg:justify-start">
-                            <h4 className='text-black text-sm font-normal'><Link href="/privacypolicy" target="_blank">Privacy policy</Link></h4>
+                            <h4 className='text-black text-sm font-normal'><Link href="/privacypolicy/page.txt" target="_blank">Privacy policy</Link></h4>
                             <div className="h-5 bg-bordertop w-0.5"></div>
-                            <h4 className='text-black text-sm font-normal'><Link href="/termsconditions" target="_blank">Terms & conditions</Link></h4>
+                            <h4 className='text-black text-sm font-normal'><Link href="/termsconditions/page.txt" target="_blank">Terms & conditions</Link></h4>
 
                         </div>
                     </div>
