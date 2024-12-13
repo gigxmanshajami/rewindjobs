@@ -1,7 +1,7 @@
 //@ts-nocheck
 'use client';
 import React, { useEffect, useState } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from "../../firebase/firebase";
 import { onAuthStateChanged } from 'firebase/auth'; // import onAuthStateChanged
 import { LoaderCircle } from 'lucide-react';
@@ -10,7 +10,7 @@ const EmailVerified = () => {
     const [loading, setLoading] = useState(true);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState(null);
-    const [uid, setUid] = useState<string | null>(null);  // To store UID
+    const [uid, setUid] = useState < string | null > (null);  // To store UID
 
     useEffect(() => {
         // Using vanilla JavaScript to get query params
@@ -29,8 +29,10 @@ const EmailVerified = () => {
                 setLoading(false);
                 return;
             }
-
-            if (user.emailVerified === false) {
+            // Check if the user's email is verified
+            const data = await getDoc(doc(db, 'user', user.uid));
+            const datas = data.data();
+            if (data.exists() && datas.emailVerified === false) {
                 try {
                     const userDocRef = doc(db, 'users', uid);
                     await setDoc(userDocRef, {
@@ -49,6 +51,8 @@ const EmailVerified = () => {
                 alert('Email is already verified');
                 window.location.href = '/profile';
             }
+
+
         };
 
         if (uid) {
