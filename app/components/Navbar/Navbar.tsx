@@ -101,7 +101,7 @@ const Navbar = () => {
                 <div className="relative flex h-20 items-center justify-between">
                     {/* LOGO */}
                     <div className="flex flex-1 items-center sm:items-stretch sm:justify-start">
-                        <Link href={'/'}>
+                        <Link href={'https://altezzasys.com/'} target='_blank'>
                             <div className="flex flex-shrink-0 items-center">
                                 <img
                                     className="block h-12 w-40 lg:hidden mt-16"
