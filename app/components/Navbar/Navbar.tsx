@@ -1,41 +1,35 @@
-// @ts-nocheck
 import { Disclosure } from '@headlessui/react';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import Drawer from "./Drawer";
 import Drawerdata from "./Drawerdata";
-import Image from 'next/image';
 import Signdialog from "./Signdialog";
 import Registerdialog from "./Registerdialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { auth, db } from '../../firebase/firebase';
 import { getDoc, doc } from 'firebase/firestore';
-import { ToastAction } from "@/components/ui/toast"
-// import { toast } from 'react-toastify';
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from 'next/navigation';
 import cookies from 'js-cookie';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
-    DropdownMenuShortcut,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from 'firebase/auth';
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
-    const [dropdownOpen, setDropdownOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loggedIn, setLoggedIn] = useState(false);
     const [userDetail, setUserDetail] = useState({});
-    const [scrolled, setScrolled] = useState(false); // Track scroll state
+    const [scrolled, setScrolled] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -60,11 +54,7 @@ const Navbar = () => {
     // Add scroll event listener
     useEffect(() => {
         const handleScroll = () => {
-            if (window.scrollY > 50) {
-                setScrolled(true);
-            } else {
-                setScrolled(false);
-            }
+            setScrolled(window.scrollY > 50);
         };
 
         window.addEventListener("scroll", handleScroll);
@@ -88,12 +78,9 @@ const Navbar = () => {
                 variant: "destructive",
                 title: "Uh oh! Something went wrong.",
                 description: "There was a problem with your request.",
-                action: <ToastAction altText="Try again">Try again</ToastAction>,
             });
         }
     };
-
-
 
     return (
         <Disclosure as="nav" className={`bg-white sticky top-0 inset-x-0 z-20 ${scrolled ? 'shadow-[0_0_20px_#e6e6e6b5]' : 'shadow-none'}`}>
@@ -101,10 +88,10 @@ const Navbar = () => {
                 <div className="relative flex h-20 items-center justify-between">
                     {/* LOGO */}
                     <div className="flex flex-1 items-center sm:items-stretch sm:justify-start">
-                        <Link href={'https://altezzasys.com/'} target='_blank'>
+                        <Link href={'/'}>
                             <div className="flex flex-shrink-0 items-center">
                                 <img
-                                    className="block h-12 w-40 lg:hidden mt-16"
+                                    className="block h-12 w-40 lg:hidden"
                                     src={'/assets/logo/logo.png'}
                                     alt="Logo"
                                 />
@@ -125,10 +112,14 @@ const Navbar = () => {
                             <DropdownMenuTrigger asChild>
                                 <Avatar>
                                     <AvatarImage
-                                        src={userDetail?.photoURL || auth.currentUser?.photoURL || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"}
+                                        src={
+                                            userDetail?.photoURL ||
+                                            auth.currentUser?.photoURL ||
+                                            "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"
+                                        }
                                     />
                                     <AvatarFallback>
-                                             <Skeleton className="w-[40px] h-[40px] rounded-full" />
+                                        <Skeleton className="w-[40px] h-[40px] rounded-full" />
                                     </AvatarFallback>
                                 </Avatar>
                             </DropdownMenuTrigger>
@@ -137,19 +128,14 @@ const Navbar = () => {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuGroup>
                                     <Link href={'/profile'}>
-                                        <DropdownMenuItem>
-                                            Profile
-                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>Profile</DropdownMenuItem>
                                     </Link>
                                 </DropdownMenuGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>GitHub</DropdownMenuItem>
                                 <DropdownMenuItem>Feedback</DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={logout}>
-                                    Log out
-                                    {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
-                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
@@ -170,7 +156,7 @@ const Navbar = () => {
                     </Drawer>
                 </div>
             </div>
-        </Disclosure >
+        </Disclosure>
     );
 };
 

@@ -272,7 +272,8 @@ const RegistrationPage = () => {
           Hire talent with RewindJobs
         </h2>
         <span className='text-[#414b5d]'> Find, engage, and hire talent on India’s leading recruitment platform</span>
-        <Image src={'/assets/sigin.png'} priority width={300} height={300} alt="image" />
+        <Image src={'/assets/auth.svg'} priority width={200} height={200} alt="image" />
+
       </div>
       <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit w-[384px]">
         <CardHeader>
@@ -351,7 +352,7 @@ const RegistrationPage = () => {
         </form>
         <CardFooter className="flex justify-between flex-col items-center mt-4 text-center text-sm">
           <span>Already have an account?</span>
-          <Link href="/login" className="underline">
+          <Link href="/signin" className="underline">
             Log In
           </Link>
         </CardFooter>

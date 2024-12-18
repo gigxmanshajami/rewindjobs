@@ -1,8 +1,9 @@
+'use client'
 import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { MapPin, Phone, Mail } from 'lucide-react'; // Import necessary icons
-
+import { usePathname } from 'next/navigation';
 // MIDDLE LINKS DATA
 interface ProductType {
     id: number;
@@ -12,19 +13,32 @@ interface ProductType {
 const products: ProductType[] = [
     {
         id: 1,
-        link: ['']
+        link: ['altzzasys software name']
     },
     {
         id: 2,
-        link: ['']
-    }
-]
+        link: ['altzzasys software name']
+    },
+    {
+        id: 3,
+        link: ['altzzasys software name']
+    },
+    {
+        id: 4,
+        link: ['altzzasys software name']
+    },
 
+]
 const footer = () => {
+    const pathname = usePathname();
+
     return (
-        <div className="bg-[#f6f6f6] mt-0">
+        <div
+            className={`bg-[#fff] mt-0 ${pathname === '/' ? 'hidden' : 'block'
+                }`}
+        >
             <div className="mx-auto max-w-2xl pt-20 px-4 sm:px-6 lg:max-w-7xl lg:px-8">
-                <div className="my-24 grid grid-cols-1 gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-12 xl:gap-x-8">
+                <div className="my-24 grid grid-cols-1 gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-12 xl:gap-x-[8rem]">
 
                     {/* COLUMN-1 */}
                     <div className='col-span-4 md:col-span-12 lg:col-span-4 '>
@@ -49,18 +63,23 @@ const footer = () => {
                     </div>
                     {/* CLOUMN-2/3 */}
 
-                    {products.map((product) => (
-                        <div key={product.id} className="group relative col-span-2 md:col-span-4 lg:col-span-2">
-                            <ul>
-                                {product.link.map((link: string, index: number) => (
-                                    <li key={index} className='mb-5'>
-                                        <Link href="/" className="text-black text-sm font-normal mb-6 space-links">{link}</Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-
+                    <div className="group relative col-span-2 md:col-span-4 lg:col-span-2">
+                        <ul>
+                            {products.map((product, index) => (
+                                <li key={index} className="mb-5">
+                                    {product.link.map((linkItem, linkIndex) => (
+                                        <Link
+                                            key={linkIndex}
+                                            href="/"
+                                            className="text-black text-sm font-normal mb-6 space-links"
+                                        >
+                                            {linkItem}
+                                        </Link>
+                                    ))}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                     {/* CLOUMN-4 */}
 
                     <div className='col-span-4 md:col-span-4 lg:col-span-4'>

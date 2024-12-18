@@ -14,6 +14,7 @@ const firebaseConfig = {
   measurementId: "G-M1BHZ6QY55"
 };
 
+// jobtracker-3b3a9.firebaseapp.com
 
 // Initializing Firebase
 const app = initializeApp(firebaseConfig);

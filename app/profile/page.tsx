@@ -643,6 +643,9 @@ const Page = (props: Props) => {
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     console.log(`Upload is ${progress}% done`);
+                    toast({
+                        description: `Upload is ${progress}% done`
+                    });
                 },
                 (err) => {
                     console.error("Upload error:", err);
@@ -1036,7 +1039,7 @@ const Page = (props: Props) => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ code: otp, phoneNumber:  tempNumber, }),
+                body: JSON.stringify({ code: otp, phoneNumber: tempNumber, }),
             });
 
             if (!verificationResponse.ok) {
@@ -1505,7 +1508,7 @@ const Page = (props: Props) => {
                 <div style={{
                     marginLeft: "-28px",
                 }}>
-                    <span className="flex"><h1 className="text-2xl font-semibold">{userDetail?.name || <Skeleton className="w-[100px] h-[20px] rounded-sm" />
+                    <span className="flex"><h1 className="text-2xl font-semibold">{userDetail?.name || "Please Enter Your Name"
                     }</h1>
                         <TooltipProvider>
                             <Tooltip>
@@ -1517,12 +1520,12 @@ const Page = (props: Props) => {
                         </TooltipProvider>
 
                     </span>
-                    <span className="text-sm mt-1 flex "> <p className="text-[#7e85a1] mr-1">Profile last updated - {lastUpdatedDisplay || < Skeleton className="w-[100px] h-[20px] rounded-full" />} </p>
+                    <span className="text-sm mt-1 flex "> <p className="text-[#7e85a1] mr-1">Profile last updated - {lastUpdatedDisplay || ""} </p>
                     </span>
                     <hr className="mt-5 mb-5" />
                     <div className="flex flex-row justify-between gap-8 ">
                         <div className="wrapper">
-                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><MapPinHouse size={15} color="#474d6a" /> {userDetail?.location || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
+                            <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><MapPinHouse size={15} color="#474d6a" /> {userDetail?.location || "Add your location"}</p>
                             {/* <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><BriefcaseBusiness size={15} color="#474d6a" /> {<Skeleton className="w-[100px] h-[20px] rounded-full" />}</p> */}
 
                             <TooltipProvider>
@@ -1530,7 +1533,7 @@ const Page = (props: Props) => {
                                     <TooltipTrigger>
 
                                         <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]">
-                                            <Calendar size={15} color="#474d6a" />  {userDetail?.availability || <Skeleton className="w-[100px] h-[20px] rounded-full" />}</p>
+                                            <Calendar size={15} color="#474d6a" />  {userDetail?.availability || "Add availability"}</p>
 
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -1542,7 +1545,7 @@ const Page = (props: Props) => {
 
                         <div>
                             <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Phone size={15} color="#474d6a" />
-                                {userDetail?.mobile || <Skeleton className="w-[100px] h-[20px] rounded-full" />
+                                {userDetail?.mobile || "Add your mobile number"
                                 }
                                 {mobileVerified === true ? (
                                     <TooltipProvider>
@@ -1565,7 +1568,7 @@ const Page = (props: Props) => {
                                 )}
                             </p>
                             <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><Mail size={15} color="#474d6a" />
-                                {userDetail?.email || <Skeleton className="w-[100px] h-[20px] rounded-full" />}
+                                {userDetail?.email || "Add your email"}
                                 {userDetail?.emailVerified === true ? (
                                     <TooltipProvider>
                                         <Tooltip>
@@ -1608,7 +1611,7 @@ const Page = (props: Props) => {
                                         </span>
                                         <span className="capitalize text-sm">
 
-                                            {field} is missing
+                                            {field}
                                         </span>
                                     </div>
                                     <span></span>

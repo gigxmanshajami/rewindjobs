@@ -1,10 +1,11 @@
 // @ts-nocheck 
 "use client";
 import React, { useEffect, useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged, fetchSignInMethodsForEmail, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '../firebase/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import {
@@ -34,7 +35,11 @@ const SignIn = () => {
     })
   }, [])
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingtwo, setLoadingtwo] = useState(false);
+
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -52,7 +57,39 @@ const SignIn = () => {
       console.log('User already signed in');
     }
   }, []);
+  const forgotPassword = async () => {
+    setLoadingtwo(true)
 
+    if (!email) {
+      setLoadingtwo(false)
+      toast({ variant: 'destrcutive', title: "Empty Mail", description: "Please Enter Your Email " });
+      return;
+    }
+
+
+    try {
+      // Check if the user exists in Firebase Auth
+      // const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+      // console.log(signInMethods,'');
+      // if (signInMethods.length === 0) {
+      //   setLoadingtwo(false)
+      //   toast({ variant: 'destructive', title: "Invalid Email!", description: "No account found with this email address." });
+      //   return;
+      // }
+
+      // Send the password reset email
+      await sendPasswordResetEmail(auth, email);
+      toast({ title: "Success!", description: "Email Sent Successfully! Please check your inbox" });
+      setIsOpen(false); // Close dialog after successful submission
+      setLoadingtwo(false)
+      return { error : null};
+    } catch (err) {
+      setLoadingtwo(false)
+      toast({ variant: 'destrcutive', title: "Failed", description: "Something Went Wrong while generating the forgot link " });
+    }
+
+
+  }
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -130,7 +167,7 @@ const SignIn = () => {
           Hire talent with RewindJobs
         </h2>
         <span className='text-[#414b5d]'> Find, engage, and hire talent on India’s leading recruitment platform</span>
-        <Image src={'/assets/sigin.png'} priority width={300} height={300} alt="image" />
+        <Image src={'/assets/auth.svg'} priority width={200} height={200} alt="image" />
       </div>
       <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit">
         <CardHeader>
@@ -173,9 +210,46 @@ const SignIn = () => {
                   {isPasswordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
                 </span>
               </div>
-              <Link href="#" className="text-sm underline mt-1 block text-right">
-                Forgot your password?
-              </Link>
+
+
+              <Dialog open={isOpen} onOpenChange={setIsOpen} >
+                {/* Button to trigger the dialog */}
+
+                <div onClick={setIsOpen} className="text-sm cursor-pointer underline mt-1 block text-right">
+                  Forgot your password?
+                </div>
+
+
+                {/* Dialog Content */}
+                <DialogContent className="sm:max-w-[425px] rounded-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-semibold text-center">
+                      Forgot Password
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  {/* Input Field for Email */}
+                  <div className="flex flex-col gap-4 mt-4">
+                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Enter your email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="example@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="rounded-lg"
+                    />
+                    <Button
+                      onClick={forgotPassword}
+                      className="w-full bg-black  text-white rounded-lg"
+                    >
+                      {loadingtwo ? <LoaderCircle className="animate-spin mr-2" /> : "Submit"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
             <Button type="submit" className="w-full">
 
