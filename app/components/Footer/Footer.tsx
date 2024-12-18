@@ -29,7 +29,7 @@ const products: ProductType[] = [
     },
 
 ]
-const footer = () => {
+const Footer = () => {
     const pathname = usePathname();
 
     return (
