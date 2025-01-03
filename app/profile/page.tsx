@@ -333,8 +333,6 @@ const Page = (props: Props) => {
             "resume.resumeheadline",
             "resume.resumepath", // Nested field
             "availability",
-            "employmentStatus",
-            "layoffDate",
             "expectedLocation",
             "gender",
             "jobType",
@@ -384,14 +382,37 @@ const Page = (props: Props) => {
             missingFields.push("skills.keys");
         }
 
+        // Conditional logic based on employmentStatus
+        const employmentStatus = userData?.employmentStatus;
+        if (employmentStatus === "notice-period") {
+            if (!userData?.noticePeriod) {
+                missingFields.push("noticePeriod");
+            } else {
+                filledFields.push("noticePeriod");
+            }
+        } else if (employmentStatus === "layoff") {
+            if (!userData?.layoffDate) {
+                missingFields.push("layoffDate");
+            } else {
+                filledFields.push("layoffDate");
+            }
+        } else {
+            // If employmentStatus is not set or invalid, both fields are considered missing
+            missingFields.push("employmentStatus");
+        }
+
         // Map the missing fields to custom messages, using the missingFieldMessages object
         const customMissingMessages = missingFields.map((field) => {
+            console.log(missingFieldMessages[field] || `Missing field: ${field}`);
             return missingFieldMessages[field] || `Missing field: ${field}`; // Use custom message or default
         });
 
-        // Calculate progress based on filled and total fields
-        const totalFields = fields.length + 1 + 2; // +1 for skills.keys, +2 for mobileVerified and emailVerified
-        const progressValue = Math.round((filledFields.length / totalFields) * 100);
+        // Calculate total fields dynamically
+        const totalFields = fields.length + 3; // +3 for mobileVerified, emailVerified, and skills.keys
+        const progressValue = Math.min(
+            Math.round((filledFields.length / totalFields) * 100),
+            100 // Ensure the progress value does not exceed 100%
+        );
 
         // Update progress and missing fields with custom messages
         setProgress(progressValue);
@@ -404,29 +425,30 @@ const Page = (props: Props) => {
 
 
 
+
     // Debounced version for side effects
     const debouncedUpdateUserProgress = useCallback(
         debounce(async (userId, userData) => {
             try {
                 const missingFieldMessages = {
-                    "mobileVerified": "Mobile is not verified. Please verify your mobile number.",
-                    "emailVerified": "Email is not verified. Please verify your email.",
+                    "mobileVerified": "Mobile is not verified.",
+                    "emailVerified": "Email is not verified.",
                     "skills.keys": "You need to add some skills.",
-                    "profileSummary": "Profile summary is missing. Please fill it in.",
-                    "resume.resumepath": "Resume file is missing, please upload it.",
-                    "gender": "Gender is missing. Please select your gender.",
-                    "name": "Name is required. Please provide your name.",
-                    "email": "Email is required. Please provide a valid email address.",
-                    "mobile": "Mobile number is required. Please provide your mobile number.",
-                    "photoURL": "Profile photo is missing. Please upload your photo.",
-                    "availability": "Availability date is missing. Please specify your availability.",
-                    "employmentStatus": "Employment status is missing. Please provide your status.",
-                    "layoffDate": "Layoff date is missing. Please provide the date of layoff.",
-                    "expectedLocation": "Expected location is missing. Please specify your preferred location.",
+                    "profileSummary": "Profile summary is missing.",
+                    "resume.resumepath": "Resume file is missing",
+                    "gender": "Gender is missing.",
+                    "name": "Name is required.",
+                    "email": "Email is required.",
+                    "mobile": "Mobile number is required.",
+                    "photoURL": "Profile photo is missing.",
+                    "availability": "Availability date is missing.",
+                    "employmentStatus": "Employment status is missing.",
+                    "layoffDate": "Layoff date is missing. .",
+                    "expectedLocation": "Expected location is missing.",
                     "location": "Location is missing. Please provide your current location.",
-                    "jobType": "Job type is missing. Please specify your preferred job type.",
-                    "presentLocation": "Current location is missing. Please provide your present location.",
-                    "resume.resumeheadline": "Resume headline is missing. Please add a headline to your resume.",
+                    "jobType": "Job type is missing. ",
+                    "presentLocation": "Current location is missing.",
+                    "resume.resumeheadline": "Resume headline is missing.",
                 };
 
                 const { progress } = calculateProgress(userData, missingFieldMessages); // Call the sync version
@@ -977,7 +999,7 @@ const Page = (props: Props) => {
         {
             id: 'resumeHeadline',
             link: 'Add resume headline',
-            description: 'Add a summary of your resume to introduce yourself to recruiters',
+            description: `${userDetail?.resume.resumeheadline || 'Add a summary of your resume to introduce yourself to recruiters'}`,
             headline: 'Resume Headline',
             fields: [
                 { id: 'headline', label: 'Headline', placeholder: `${dialogdata.resumeheadline || 'Enter your resume headline'}`, maxLength: 100 }
@@ -987,7 +1009,7 @@ const Page = (props: Props) => {
         {
             id: 'keySkills',
             link: 'Add key skills',
-            description: 'Recruiters look for candidates with specific key skills',
+            description: `${userDetail?.skills.keys.length + ' skills added' || 'Recruiters look for candidates with specific key skills'}`,
             headline: 'Key Skills',
             fields: [], // No single input field; handled dynamically
             save: saveKeySkills,
@@ -1003,7 +1025,7 @@ const Page = (props: Props) => {
         {
             id: 'profileSummary',
             link: 'Add profile summary',
-            description: 'Highlight your key career achievements to help employers know your potential',
+            description: `${userDetail?.profileSummary || 'Highlight your key career achievements to help employers know your potential'}`,
             headline: 'Profile Summary',
             fields: [
                 { id: 'summary', label: 'Profile Summary', placeholder: `${dialogdata.summary || 'Summarize your career achievements'}`, maxLength: 300 }
@@ -1631,7 +1653,13 @@ const Page = (props: Props) => {
                 )}
 
             </div>
-            <div className="flex flex-row justify-evenly pl-[30px] pr-5 py-5 ">
+
+            {/* display: flex
+;
+    align-items: center;
+    justify-content: center;
+    gap: 32px; */}
+            <div className="flex flex-row items-center justify-center gap-[32px] pl-[30px] pr-5 py-5 ">
                 {comploading ? (
                     <Skeleton className="w-[242px] h-[539px] rounded-lg" />
 
@@ -1677,7 +1705,7 @@ const Page = (props: Props) => {
                                         links.find(link => link.id === openDialog)?.fields?.map((field) => (
                                             <div key={field.id}>
                                                 <Label htmlFor={field.id}>{field.label}</Label>
-                                                <Input
+                                                <Textarea
                                                     id={field.id}
                                                     placeholder={field.placeholder}
                                                     value={dialogdata[field.id] || ""}
@@ -1687,8 +1715,8 @@ const Page = (props: Props) => {
                                                     }))}
                                                     autoFocus={false}
                                                     maxLength={field.maxLength}
-                                                    className="w-full"
-                                                />
+                                                    className="w-full" />
+
                                                 {field.maxLength && (
                                                     <p className="text-right text-gray-500 text-xs mt-1">
                                                         {field.maxLength - (dialogdata[field.id]?.length || 0)} character(s) left
@@ -1789,7 +1817,7 @@ const Info = ({ headline, link, description, onLinkClick }) => (
                 {link}
             </span>
         </div>
-        <p className="text-sm text-[#474d6a] mt-2">
+        <p className="text-sm text-[#229715] mt-2">
             {description}
         </p>
     </div>

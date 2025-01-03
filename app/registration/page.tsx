@@ -266,16 +266,16 @@ const RegistrationPage = () => {
   };
 
   return (
-    <div className="flex w-full justify-center px-4 bg-[#f8f9fa] p-4 h-[44rem]">
-      <div className='flex justify-center items-center flex-col pl-40 pb-44'>
+    <div className="flex w-full justify-center px-4 bg-[#f8f9fa] p-4 h-fit">
+      {/* <div className='flex justify-center items-center flex-col pl-40 pb-44'>
         <h2 className='text-[28px] text-[#414b5d]'>
           Hire talent with RewindJobs
         </h2>
         <span className='text-[#414b5d]'> Find, engage, and hire talent on India’s leading recruitment platform</span>
         <Image src={'/assets/auth.svg'} priority width={200} height={200} alt="image" />
 
-      </div>
-      <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit w-[384px]">
+      </div> */}
+      <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit w-[384px] ">
         <CardHeader>
           <h2 className="text-2xl font-bold">Create your Profile</h2>
         </CardHeader>
@@ -289,6 +289,7 @@ const RegistrationPage = () => {
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="Your full name"
+                className='shadow-none'
                 required
               />
             </div>
@@ -300,6 +301,7 @@ const RegistrationPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                className='shadow-none'
                 placeholder="Your email"
                 required
               />
@@ -310,6 +312,7 @@ const RegistrationPage = () => {
               <Input
                 type="text"
                 name="mobile"
+                className='shadow-none'
                 value={formData.mobile}
                 onChange={handleChange}
                 placeholder="Your mobile number"
@@ -327,7 +330,7 @@ const RegistrationPage = () => {
                   onChange={handleChange}
                   placeholder="Your password"
                   required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 shadow-none"
                 />
                 <span
                   className="absolute right-3 cursor-pointer"
@@ -337,14 +340,14 @@ const RegistrationPage = () => {
                 </span>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !formData.email || !formData.password || !formData.mobile || !formData.fullName}>
               {loading ? (
                 <LoaderCircle size={24} className="animate-spin" />
               ) : (
                 "Register"
               )}
             </Button>
-            <Button variant="outline" className="w-full" type='submit' onClick={googleSignIn}>
+            <Button variant="outline" className="w-full font-semibold" type='submit' onClick={googleSignIn}>
               <Image src={'/assets/g.svg'} width={20} height={20} alt='google' />
               Continue with google
             </Button>

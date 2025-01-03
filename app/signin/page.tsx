@@ -82,7 +82,7 @@ const SignIn = () => {
       toast({ title: "Success!", description: "Email Sent Successfully! Please check your inbox" });
       setIsOpen(false); // Close dialog after successful submission
       setLoadingtwo(false)
-      return { error : null};
+      return { error: null };
     } catch (err) {
       setLoadingtwo(false)
       toast({ variant: 'destrcutive', title: "Failed", description: "Something Went Wrong while generating the forgot link " });
@@ -161,14 +161,14 @@ const SignIn = () => {
   };
 
   return (
-    <div className="flex w-full  justify-center px-4 bg-[#f8f9fa] p-4 h-[44rem]">
-      <div className='flex justify-center items-center flex-col pl-40 pb-44'>
+    <div className="flex w-full  justify-center px-4 bg-[#f8f9fa] p-4 h-fit">
+      {/* <div className='flex justify-center items-center flex-col pl-40 pb-44'>
         <h2 className='text-[28px] text-[#414b5d]'>
           Hire talent with RewindJobs
         </h2>
         <span className='text-[#414b5d]'> Find, engage, and hire talent on India’s leading recruitment platform</span>
         <Image src={'/assets/auth.svg'} priority width={200} height={200} alt="image" />
-      </div>
+      </div> */}
       <Card className="mx-auto max-w-sm shadow-none rounded-lg h-fit">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Login</CardTitle>
@@ -243,6 +243,7 @@ const SignIn = () => {
                     />
                     <Button
                       onClick={forgotPassword}
+                      disabled={!email}
                       className="w-full bg-black  text-white rounded-lg"
                     >
                       {loadingtwo ? <LoaderCircle className="animate-spin mr-2" /> : "Submit"}
@@ -251,11 +252,11 @@ const SignIn = () => {
                 </DialogContent>
               </Dialog>
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className={`w-full ${!formData.email || !formData.password ? "opacity-50 cursor-not-allowed" : ""}`} disabled={!formData.email || !formData.password}>
 
               {loading ? <LoaderCircle className="animate-spin mr-2" /> : "Login"}
             </Button>
-            <Button variant="outline" className="w-full" onClick={googleSign}>
+            <Button variant="outline" className="w-full " onClick={googleSign}>
               <Image src={'/assets/g.svg'} width={20} height={20} alt='google' />
               Login with Google
             </Button>

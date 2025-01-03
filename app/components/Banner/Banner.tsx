@@ -71,24 +71,24 @@ const Banner = () => {
         // </main>
         <main
             className="grid lg:grid-cols-2 place-items-center pt-16 pb-8 md:pt-12 md:pb-24 lg:p-10">
-            <div className="md:order-1 md:block lg:h-64  relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-lg">
-                {/* <Image
-                    src={'/assets/heromain.png'}
+            <div className="md:order-1  h-auto  relative flex w-full flex-col items-center justify-center overflow-hidden rounded-lg">
+                <Image
+                    src={'/assets/hero.png'}
                     alt="Astronaut in the air"
                     width={584}
-                    style={{
-                        height: "422px !important",
-                    }}
+                    // style={{
+                    //     height: "422px !important",
+                    // }}
                     // className="animate-ping"
-                    height={422}
+                    height={500}
                 // sizes="(max-width: 800px) 100vw, 620px"
                 // loading="eager"
                 // format="avif"
-                /> */}
+                />
                 {/* <div className="relative flex size-full top-[-67px] max-w-lg pb-20 items-center justify-center overflow-hidden  ">
                     <IconCloud iconSlugs={slugs} />
                 </div> */}
-                <Marquee pauseOnHover className="[--duration:20s]">
+                {/* <Marquee pauseOnHover className="[--duration:20s]">
                     {firstRow.map((review) => (
                         <ReviewCard key={review.username} {...review} />
                     ))}
@@ -99,7 +99,7 @@ const Banner = () => {
                     ))}
                 </Marquee>
                 <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white dark:from-background"></div>
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white dark:from-background"></div>
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white dark:from-background"></div> */}
             </div>
             <div >
                 <h1

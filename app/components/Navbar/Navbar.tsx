@@ -88,8 +88,8 @@ const Navbar = () => {
             <div className="mx-auto max-w-7xl px-6">
                 <div className="relative flex h-20 items-center justify-between">
                     {/* LOGO */}
-                    <div className="flex flex-1 items-center sm:items-stretch sm:justify-start">
-                        <Link href={'/'}>
+                    <div>
+                        <Link href={'https://altezzasys.com/'} target='_blank'>
                             <div className="flex flex-shrink-0 items-center">
                                 <img
                                     className="block h-12 w-40 lg:hidden"
@@ -105,47 +105,56 @@ const Navbar = () => {
                         </Link>
                     </div>
 
-                    {/* Display loading state or user avatar */}
-                    {loading ? (
-                        <Skeleton className="w-[40px] h-[40px] rounded-full" />
-                    ) : loggedIn ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Avatar>
-                                    <AvatarImage
-                                        src={
-                                            userDetail?.photoURL ||
-                                            auth.currentUser?.photoURL ||
-                                            "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"
-                                        }
-                                    />
-                                    <AvatarFallback>
-                                        <Skeleton className="w-[40px] h-[40px] rounded-full" />
-                                    </AvatarFallback>
-                                </Avatar>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56 mr-8">
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <Link href={'/profile'}>
-                                        <DropdownMenuItem>Profile</DropdownMenuItem>
-                                    </Link>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>GitHub</DropdownMenuItem>
-                                <DropdownMenuItem>Feedback</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <div className="flex items-center space-x-4">
-                            <Signdialog />
-                            <Registerdialog />
-                        </div>
-                    )}
-
+                    <div className="flex gap-4 relative right-[113px]">
+                        <Link href={'/'} className='hover:underline'>
+                            Home
+                        </Link>
+                        <Link href={'/process'} className='hover:underline'>
+                            How the process works
+                        </Link>
+                        <Link href={'/aboutus'} className='hover:underline'>
+                            About Us
+                        </Link>
+                    </div>
+                    <div>
+                        {/* Display loading state or user avatar */}
+                        {loading ? (
+                            <Skeleton className="w-[40px] h-[40px] rounded-full" />
+                        ) : loggedIn ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Avatar>
+                                        <AvatarImage
+                                            src={
+                                                userDetail?.photoURL ||
+                                                auth.currentUser?.photoURL ||
+                                                "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"
+                                            }
+                                        />
+                                        <AvatarFallback>
+                                            <Skeleton className="w-[40px] h-[40px] rounded-full" />
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56 mr-8">
+                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuGroup>
+                                        <Link href={'/profile'}>
+                                            <DropdownMenuItem>Profile</DropdownMenuItem>
+                                        </Link>
+                                    </DropdownMenuGroup>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <div className="flex items-center space-x-4">
+                                <Signdialog />
+                                <Registerdialog />
+                            </div>
+                        )}
+                    </div>
                     {/* Drawer Icon for Mobile View */}
                     <div className="block lg:hidden">
                         <Bars3Icon className="block h-6 w-6" aria-hidden="true" onClick={() => setIsOpen(true)} />
