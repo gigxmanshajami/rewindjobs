@@ -213,12 +213,6 @@ const Page = (props: Props) => {
     };
 
 
-    // useEffect(() => {
-    //     // Fetch data from API if `location` object is set
-    //     if (location) {
-    //         fetchApiData(location);
-    //     }
-    // }, [location]);
     const handleSelectChange = (value) => {
         setSelectedJobType(value);
     };
@@ -242,14 +236,6 @@ const Page = (props: Props) => {
         }
     };
 
-    // Populate refs for each field
-    // const populateRefs = (fields) => {
-    //     fields.forEach((field) => {
-    //         if (!sectionRefs.current[field]) {
-    //             sectionRefs.current[field] = React.createRef();
-    //         }
-    //     });
-    // };
 
     useEffect(() => {
         if (open == false) {
@@ -1676,12 +1662,37 @@ const Page = (props: Props) => {
                                 key={item.id}
                                 headline={item.headline}
                                 link={item.link}
-                                description={item.description}
+                                description={
+                                    item.id === 'keySkills' ? (
+                                        userDetail?.skills.keys.map((skill, index) => (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                <div
+                                                    key={index}
+                                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full flex items-center space-x-2"
+                                                >
+                                                    <span>{skill}</span>
+                                                    {/* <button
+                                                        type="button"
+                                                        onClick={() => removeSkill(index)}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        ✕
+                                                    </button> */}
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        item.description
+                                    )
+                                }
                                 onLinkClick={() => handleDialogOpen(item.id)}
                             />
                         )
-
                     ))}
+                    <div className="flex justify-end gap-[10px]" >
+                        <Button variant='outline' disabled={true}>SAVE</Button>
+                        <Button disabled={true}>PUBLISH</Button>
+                    </div>
                     {/* Dynamic Dialog Rendering */}
                     {openDialog && (
                         <Dialog open={!!openDialog} onOpenChange={handleDialogClose}>
@@ -1817,11 +1828,12 @@ const Info = ({ headline, link, description, onLinkClick }) => (
                 {link}
             </span>
         </div>
-        <p className="text-sm text-[#229715] mt-2">
-            {description}
-        </p>
+        <div className="text-sm text-[#229715] mt-2 grid grid-cols-10  gap-2 overflow-hidden">
+            {typeof description === 'string' ? <p className="overflow-hidden break-all w-[791px]">{description}</p> : description}
+        </div>
     </div>
 );
+
 
 function QuickLinks({ handleDialogOpen }) {
     const quickLinks = [
