@@ -1665,9 +1665,10 @@ const Page = (props: Props) => {
                                 description={
                                     item.id === 'keySkills' ? (
                                         userDetail?.skills.keys.map((skill, index) => (
-                                            <div className="flex flex-wrap gap-2 mt-2">
+                                            <div className="flex flex-wrap gap-2 mt-2"
+                                                key={index}
+                                            >
                                                 <div
-                                                    key={index}
                                                     className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full flex items-center space-x-2"
                                                 >
                                                     <span>{skill}</span>
