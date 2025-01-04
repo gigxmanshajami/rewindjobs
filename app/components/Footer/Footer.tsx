@@ -112,7 +112,7 @@ const Footer = () => {
                         </div>
                     </div>
                     <div className="pt-4 pb-1">
-                        <Link href="https://manshajami.xyz/" target="_blank"><span className="text-sm flex items-center justify-center font-normal text-black float-right"> Developed With <Heart className="ml-1 mr-1 animate-pulse" size={17} color="red" fill="red" /> <span className="underline">Mansha Jami</span> </span></Link>
+                        <Link href="https://manshajami.xyz/" target="_blank"><span className="text-sm flex items-center justify-center font-normal text-black float-right"> Developed With <Heart className="ml-1 mr-1 animate-pulse" size={17} color="red" fill="red" /> By <span className="underline">Mansha Jami</span> </span></Link>
                     </div>
                 </div>
 
