@@ -89,7 +89,7 @@ const Navbar = () => {
                 <div className="relative flex h-20 items-center justify-between">
                     {/* LOGO */}
                     <div>
-                        <Link href={'https://altezzasys.com/'} target='_blank'>
+                        <Link href={'https://www.altezzasys.com/'} target='_blank'>
                             <div className="flex flex-shrink-0 items-center">
                                 <img
                                     className="block h-12 w-40 lg:hidden"

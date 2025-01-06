@@ -1,37 +1,47 @@
 // @ts-nocheck
 'use client'
+import { useState, useEffect } from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { MapPin, Phone, Mail } from 'lucide-react'; // Import necessary icons
 import { usePathname } from 'next/navigation';
+ // Import Firebase configuration
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/app/firebase/firebase';
+
 // MIDDLE LINKS DATA
 interface ProductType {
-    id: number;
-    link: string[];
+    id: string;
+    name: string;
+    link: string;
 }
 
-const products: ProductType[] = [
-    {
-        id: 1,
-        link: ['altzzasys software name']
-    },
-    {
-        id: 2,
-        link: ['altzzasys software name']
-    },
-    {
-        id: 3,
-        link: ['altzzasys software name']
-    },
-    {
-        id: 4,
-        link: ['altzzasys software name']
-    },
-
-]
 const Footer = () => {
+    const [products, setProducts] = useState<ProductType[]>([]);
     const pathname = usePathname();
+
+    // Fetch products from Firestore
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const fetchedProducts: ProductType[] = [];
+                querySnapshot.forEach((doc) => {
+                    fetchedProducts.push({
+                        id: doc.id,
+                        ...doc.data(),
+                    });
+                });
+                console.log(fetchProducts)
+                setProducts(fetchedProducts);
+            } catch (error) {
+                console.error("Error fetching products:", error);
+            }
+        };
+
+        fetchProducts();
+    }, []);
 
     return (
         <div
@@ -62,27 +72,24 @@ const Footer = () => {
                             </a>
                         </div>
                     </div>
-                    {/* CLOUMN-2/3 */}
 
+                    {/* COLUMN-2/3 */}
                     <div className="group relative col-span-2 md:col-span-4 lg:col-span-2">
                         <ul>
-                            {products.map((product, index) => (
-                                <li key={index} className="mb-5">
-                                    {product.link.map((linkItem, linkIndex) => (
-                                        <Link
-                                            key={linkIndex}
-                                            href="/"
-                                            className="text-black text-sm font-normal mb-6 space-links"
-                                        >
-                                            {linkItem}
-                                        </Link>
-                                    ))}
+                            {products.map((product) => (
+                                <li key={product.id} className="mb-5">
+                                    <Link
+                                        href={product.url}
+                                        className="text-black text-sm font-normal mb-6 space-links"
+                                    >
+                                        {product.name}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
                     </div>
-                    {/* CLOUMN-4 */}
 
+                    {/* COLUMN-4 */}
                     <div className='col-span-4 md:col-span-4 lg:col-span-4'>
                         <div className="flex gap-2 ">
                             <MapPin className="text-black" size={24} /> {/* Location Icon */}
@@ -100,7 +107,6 @@ const Footer = () => {
                 </div>
 
                 {/* All Rights Reserved */}
-
                 <div className='py-10 lg:flex flex-col justify-between border-t border-t-bordertop pb-4'>
                     <div className="flex justify-between">
                         <h4 className='text-black text-sm text-center lg:text-start font-normal'>@2024 All Rights Reserved By RewindJobs</h4>
@@ -108,16 +114,14 @@ const Footer = () => {
                             <h4 className='text-black text-sm font-normal'><Link href="/privacypolicy/page.txt" target="_blank">Privacy policy</Link></h4>
                             <div className="h-5 bg-bordertop w-0.5"></div>
                             <h4 className='text-black text-sm font-normal'><Link href="/termsconditions/page.txt" target="_blank">Terms & conditions</Link></h4>
-
                         </div>
                     </div>
                     <div className="pt-4 pb-1">
-                        <Link href="https://manshajami.xyz/" target="_blank"><span className="text-sm flex items-center justify-center font-normal text-black float-right"> Developed With <Heart className="ml-1 mr-1 animate-pulse" size={17} color="red" fill="red" /> By <span className="underline">Mansha Jami</span> </span></Link>
+                        <Link href="https://manshajami.xyz/" target="_blank"><span className="text-sm flex items-center justify-center font-normal text-black float-right"> Developed With <Heart className="ml-1 mr-1 animate-pulse" size={17} color="red" fill="red" /> By <span className="underline ml-1"> Mansha Jami</span> </span></Link>
                     </div>
                 </div>
 
             </div>
-
         </div >
     )
 }

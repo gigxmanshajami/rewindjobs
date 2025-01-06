@@ -1,6 +1,8 @@
 
 // @ts-nocheck 
-"use client";
+// @ts-nocheck
+"use client"
+;
 import { Button } from "@/components/ui/button";
 import React, { useCallback } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -1665,7 +1667,7 @@ const Page = (props: Props) => {
                                 description={
                                     item.id === 'keySkills' ? (
                                         userDetail?.skills.keys.map((skill, index) => (
-                                            <div className="flex flex-wrap gap-2 mt-2"
+                                            <div className="flex flex-wrap mt-2 w-fit"
                                                 key={index}
                                             >
                                                 <div
@@ -1749,7 +1751,13 @@ const Page = (props: Props) => {
                                                     link.save(dialogdata);
                                                 }
                                                 handleDialogClose();
+                                                console.log(dialogdata);
                                             }}
+                                            disabled={
+                                                links
+                                                    .find(link => link.id === openDialog)
+                                                    ?.fields?.some((field) => !dialogdata[field.id]?.trim())
+                                            }
                                         >
                                             Save
                                         </Button>
@@ -1829,7 +1837,7 @@ const Info = ({ headline, link, description, onLinkClick }) => (
                 {link}
             </span>
         </div>
-        <div className="text-sm text-[#229715] mt-2 grid grid-cols-10  gap-2 overflow-hidden">
+        <div className="text-sm text-[#229715] mt-2 grid grid-cols-10 overflow-hidden">
             {typeof description === 'string' ? <p className="overflow-hidden break-all w-[791px]">{description}</p> : description}
         </div>
     </div>
@@ -2215,13 +2223,54 @@ const getCroppedImg = async (imageSrc, pixelCrop) => {
 
 const KeySkillsInput = ({ skills, setSkills }) => {
     const [input, setInput] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+
+    const myHeaders = new Headers();
+    myHeaders.append("apikey", "OzaSn3jYECL3CEbvJ1pKzejW3G4RHn4U");
+
+    const requestOptions = {
+        "Accept": "application/json",
+        redirect: 'follow',
+        headers: myHeaders,
+    };
+
+    const fetchSuggestions = (query) => {
+        if (query.trim() === '') {
+            setSuggestions([]);
+            return;
+        }
+
+        fetch(`https://api.apilayer.com/skills?q=${query}`, requestOptions)
+            .then((response) => response.json())
+            .then((result) => {
+                setSuggestions(result || []); // Assuming API returns skills array
+                setIsDropdownVisible(true);
+                console.log(result);
+                console.log(suggestions);
+            })
+            .catch((error) => console.error('Error fetching skills:', error));
+    };
+
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setInput(value);
+        fetchSuggestions(value);
+    };
 
     const handleKeyDown = (e) => {
         if (e.key === ',' && input.trim() !== '') {
             e.preventDefault();
-            setSkills([...skills, input.trim()]);
-            setInput('');
+            addSkill(input.trim());
         }
+    };
+
+    const addSkill = (skill) => {
+        if (!skills.includes(skill)) {
+            setSkills([...skills, skill]);
+        }
+        setInput('');
+        setIsDropdownVisible(false);
     };
 
     const removeSkill = (index) => {
@@ -2250,12 +2299,29 @@ const KeySkillsInput = ({ skills, setSkills }) => {
             </div>
             <Input
                 id="skills"
-                placeholder="Enter your skills and press ','"
+                placeholder="Enter your skills"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                className="mt-4 w-full"
+                className="w-full mt-4 border-gray-300 outline-none rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
+            {isDropdownVisible && suggestions.length > 0 && (
+                <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+
+                    {suggestions.map((suggestion, index) => (
+                        <div
+                            key={index}
+                            onClick={() => addSkill(suggestion)}
+                            className="px-4 py-2 cursor-pointer hover:bg-blue-100"
+                        >
+                            {suggestion}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
+
+
+
