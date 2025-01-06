@@ -80,6 +80,7 @@ const Footer = () => {
                                 <li key={product.id} className="mb-5">
                                     <Link
                                         href={product.url}
+                                        target='_blank'
                                         className="text-black text-sm font-normal mb-6 space-links"
                                     >
                                         {product.name}
