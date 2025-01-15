@@ -1178,7 +1178,7 @@ const Page = (props: Props) => {
     }
     const saveMobilenumber = async () => {
         try {
-          settempdialogarr((prev) => ({ ...prev, mobile: '+91' + dialogdata.mobile }))
+            settempdialogarr((prev) => ({ ...prev, mobile: '+91' + dialogdata.mobile }))
             toast({ title: "Mobile added!" });
         } catch (err) {
             toast({ variant: "destructive", title: "Data Upload failed", description: err });
@@ -1254,8 +1254,8 @@ const Page = (props: Props) => {
         {
             id: 'location',
             link: 'Add location',
-            description: `${userDetail?.location || 'Add Your Location'}`,
-            headline: 'Add Your Location',
+            description: `${userDetail?.location || 'Add Your Present Location'}`,
+            headline: 'Add Your Present Location',
             fields: [
                 { id: 'location', label: 'Location', placeholder: `${userDetail?.location || 'Add Your location'}` }
             ], // No single input field; handled dynamically
@@ -1411,7 +1411,7 @@ const Page = (props: Props) => {
         });
     };
     return (
-        <div className="bg-[#f8f9fa] py-[15rem] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem]" >
+        <div className="bg-[#f8f9fa] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem]" >
             <div id="recaptcha-container"></div>
             <Dialog open={cropping} onOpenChange={setCropping}>
                 <DialogTrigger asChild>
@@ -1453,114 +1453,6 @@ const Page = (props: Props) => {
                     </DialogHeader>
 
                     <form className="space-y-4" onSubmit={handleSubmit}>
-                        {/* Name Field */}
-                        <div>
-                            <Label htmlFor="name">Name</Label>
-                            <Input
-                                id="name"
-                                placeholder="Your Name"
-                                required
-                                className="w-full"
-                                value={formData.name}
-                                onChange={(e) => handleInputChange(e, 'name')}
-                            />
-                        </div>
-
-                        {/* Current Location */}
-                        <div>
-                            <Label>Current Location</Label>
-                            <DialogDescription className="text-sm text-gray-500">
-                                This helps us match you to relevant jobs.
-                            </DialogDescription>
-                            <div className="relative">
-                                <Input
-                                    id="location"
-                                    placeholder="Enter location"
-                                    required
-                                    className="w-full mt-2"
-                                    value={formData.location}
-                                    onChange={(e) => handleInputChange(e, 'location')}
-                                />
-                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 bg-transparent border-none">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <button
-                                                    onClick={() => { fetchGeo('current') }}
-                                                    disabled={geoLoading}
-                                                // variant='ghost'
-
-                                                >
-                                                    {geoLoading === true ? (
-                                                        <LoaderCircle
-                                                            size={14}
-                                                            color="black"
-                                                            className="animate-spin"
-                                                        />
-                                                    ) : (
-                                                        <MapPinHouse size={13} />
-                                                    )}
-
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Fetch Your Current Location</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Mobile Number with Send OTP Button */}
-                        <div>
-                            <Label htmlFor="mobile">Mobile Number</Label>
-                            <DialogDescription className="text-sm text-gray-500">
-                                Recruiters will contact you on this number.
-                            </DialogDescription>
-                            <div className="flex gap-2 flex-col">
-                                <Input
-                                    id="mobile"
-                                    placeholder="Your mobile number"
-                                    required
-                                    className="w-full"
-                                    value={formData.mobile}
-                                    onChange={(e) => handleInputChange(e, 'mobile')}
-                                />
-                                {(formData.mobile !== "" &&
-                                    (formData.mobile !== verifiedMobile || mobileVerified === false)) &&
-                                    (otpLoadingtwo ? (
-                                        <LoaderCircle size={24} className="animate-spin" />
-                                    ) : (
-                                        <Button
-                                            type="button"
-                                            variant="link"
-                                            className="w-fit"
-                                            onClick={() => sendSMS(`+91${formData.mobile}`)}
-                                        >
-                                            Verify Number?
-                                        </Button>
-                                    ))}
-                            </div>
-                        </div>
-
-                        {/* Email Address */}
-                        <div>
-                            <Label htmlFor="email">Email Address</Label>
-                            <DialogDescription className="text-sm text-gray-500">
-                                We will send relevant jobs and updates to this email.
-                            </DialogDescription>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="Your email address"
-                                required
-                                className="w-full"
-                                value={formData.email}
-                                onChange={(e) => handleInputChange(e, 'email')}
-                            />
-                        </div>
-
                         {/* Gender */}
                         <div>
                             <Label>Gender</Label>
@@ -1583,56 +1475,11 @@ const Page = (props: Props) => {
                             </div>
                         </div>
 
-                        {/* Present Location */}
-                        <div>
-                            <Label>Present Location</Label>
-                            <div className="relative">
-                                <Input
-                                    id="present-location"
-                                    placeholder="Enter present location"
-                                    required
-                                    className="w-full mt-2 pr-10" // Add padding to the right to avoid overlap with the icon
-                                    value={formData.presentLocation}
-                                    onChange={(e) => handleInputChange(e, 'presentLocation')}
-                                />
-
-                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 bg-transparent border-none">
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger>
-
-                                                <button
-                                                    onClick={() => { fetchGeo('present') }}
-                                                    disabled={geoLoading}
-                                                // variant='ghost'
-
-                                                >
-                                                    {geoLoading === true ? (
-                                                        <LoaderCircle
-                                                            size={14}
-                                                            color="black"
-                                                            className="animate-spin"
-                                                        />
-                                                    ) : (
-                                                        <MapPinHouse size={13} />
-                                                    )}
-
-                                                </button>
-
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Fetch Your Current location</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-
-                            </div>
-                        </div>
+                    
 
                         {/* Expected Location */}
                         <div>
-                            <Label>Expected Location</Label>
+                            <Label>Preferred Location</Label>
                             <Input
                                 id="expected-location"
                                 placeholder="Enter expected location"
@@ -2202,6 +2049,10 @@ const Info = ({ headline, link, description, onLinkClick }) => (
 function QuickLinks({ handleDialogOpen }) {
     const quickLinks = [
         { id: 'resume', label: 'Resume', action: 'Upload' },
+        { id: 'name', label: 'Name', action: 'Add' },
+        { id: 'Emailver', label: 'Email', action: 'Add' },
+        { id: 'location', label: 'Location', action: 'Add' },
+        { id: 'mobilenumber', label: 'Mobile', action: 'Add' },
         { id: 'resumeHeadline', label: 'Resume headline', action: 'Add' },
         { id: 'keySkills', label: 'Key skills', action: 'Add' },
         // { id: 'Employment', label: 'Employment', action: 'Add' },
