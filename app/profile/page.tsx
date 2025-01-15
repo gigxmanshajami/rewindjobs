@@ -2,7 +2,7 @@
 // @ts-nocheck 
 // @ts-nocheck
 "use client"
-;
+    ;
 import { Button } from "@/components/ui/button";
 import React, { useCallback } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import { LoaderCircle, Router, BadgeCheck, CircleAlert } from 'lucide-react';
 import { ref, deleteObject, listAll, uploadBytes, getDownloadURL, uploadBytesResumable, } from "firebase/storage";
 import { CircularProgressbarWithChildren } from 'react-circular-progressbar';
 import { debounce, } from 'lodash';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectGroup } from "@/components/ui/select";
 import _isEqual from 'lodash/isEqual'
 import Link from 'next/link';
 import { FaCamera } from "react-icons/fa";
@@ -49,6 +49,9 @@ import Cropper from 'react-easy-crop';
 import { Badge } from "@/components/ui/badge";
 // import { useSectionRefs } from "../SectionRefsContext
 import { format } from 'date-fns';
+
+
+import countryCodes from '@/lib/countryCodes.json'
 import { Console } from "console";
 type Props = {}
 const sections = ["uploadSection", "statusSection"];
@@ -64,7 +67,8 @@ const missingFieldLabels = {
 };
 
 const Page = (props: Props) => {
-
+    const [selectedCountry, setSelectedCountry] = useState(null)
+    const [isPublishDisabled, setIsPublishDisabled] = useState(true);
     const [otp, setOtp] = useState("");  // OTP state
     const [verificationId, setVerificationId] = useState("");  // Store Firebase OTP verification ID
     const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false); // Control dialog visibility
@@ -90,6 +94,8 @@ const Page = (props: Props) => {
     const [mensen, setMensen] = useState([]);
     const [location, setLocation] = useState();
     const router = useRouter();
+    const [disabledSaveButton, setdisabledSaveButton] = useState(true);
+    const [tempdialogarr, settempdialogarr] = useState([]);
     useEffect(() => {
         onAuthStateChanged(auth, (user) => {
             if (!user) {
@@ -98,6 +104,56 @@ const Page = (props: Props) => {
             }
         })
     }, [])
+    useEffect(() => {
+        setdisabledSaveButton(tempdialogarr.length === 0);
+
+
+        console.log(tempdialogarr.length)
+        console.log(tempdialogarr)
+
+    }, [tempdialogarr]);
+
+    useEffect(() => {
+        if (!auth.currentUser?.uid) return;
+
+        const userDocRef = doc(db, "users", auth.currentUser?.uid);
+
+        // Real-time listener for modeType
+        const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const data = docSnapshot.data();
+                setIsPublishDisabled(data.modeType !== "save");
+            }
+        });
+
+        // Cleanup listener on component unmount
+        return () => unsubscribe();
+    }, [auth.currentUser?.uid]);
+
+    const handlePublish = async () => {
+        if (!auth.currentUser?.uid) return;
+
+        const userDocRef = doc(db, "users", auth.currentUser?.uid);
+
+        try {
+            await setDoc(
+                userDocRef,
+                { modeType: "published", lastUpdated: new Date() },
+                { merge: true }
+            );
+            console.log("Document updated to 'published'");
+            toast({
+                title: "Published!",
+                description: "Your Profile is now  published!",
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error updating document:",
+            });
+            console.log(error.message);
+        }
+    };
     const fetchApiData = async (latitude, longitude, config) => {
         try {
             setgeoLoading(true);
@@ -456,6 +512,135 @@ const Page = (props: Props) => {
         // Call the debounced version for async updates
         debouncedUpdateUserProgress(userId, userData);
     };
+    // Helper function to handle empty fields
+    const getFieldValue = (field) => {
+        return field === undefined || field === '' ? null : field;
+    };
+    // const saveAllField = async () => {
+    //     setdisabledSaveButton(true);
+    //     toast({
+
+    //         title: "Saving Data",
+    //         description: "Please Wait While Your Datas are being saved",
+    //     });
+    //     try {
+    //         console.log(tempdialogarr?.headline)
+
+    //         // Set document in Firestore
+    //         await setDoc(
+    //             doc(db, "users", auth.currentUser?.uid),
+    //             {
+    //                 profileSummary: getFieldValue(tempdialogarr?.summary),
+    //                 name: getFieldValue(tempdialogarr?.name),
+    //                 email: getFieldValue(tempdialogarr?.email),
+    //                 location: getFieldValue(tempdialogarr?.location),
+    //                 mobile: getFieldValue(tempdialogarr?.mobile),
+    //                 resume: {
+    //                     resumeheadline: getFieldValue(tempdialogarr?.headline),
+    //                 },
+    //                 skills: {
+    //                     keys: getFieldValue(tempdialogarr?.skills),
+    //                 },
+    //                 modeType: 'save',
+    //                 lastUpdated: new Date(),
+    //             },
+    //             { merge: true }
+    //         );
+
+    //         toast({
+
+    //             title: "Updated",
+    //             description: "successfully to update profile information",
+    //         });
+    //     } catch (err) {
+    //         console.log(err);
+    //         // setdisabledSaveButton(false);
+    //         toast({
+    //             variant: "destructive",
+    //             title: "Update failed",
+    //             description: err.message || "Failed to update profile information",
+    //         });
+    //     } finally {
+    //         setdisabledSaveButton(false);
+    //     }
+
+    // }
+
+    const saveAllField = async () => {
+        try {
+            const userDocRef = doc(db, "users", auth.currentUser?.uid);
+
+            // Fetch the existing document data
+            const existingDoc = await getDoc(userDocRef);
+            const existingData = existingDoc.exists() ? existingDoc.data() : {};
+
+            // Helper function to handle field value logic
+            const getFieldValue = (newField, existingField) => {
+                return newField === undefined || newField === '' ? existingField ?? null : newField;
+            };
+
+            // Prepare the updated data
+            console.log(tempdialogarr?.mobile)
+            const rawUpdatedData = {
+                profileSummary: getFieldValue(tempdialogarr?.summary, existingData.profileSummary),
+                name: getFieldValue(tempdialogarr?.name, existingData.name),
+                email: getFieldValue(tempdialogarr?.email, existingData.email),
+                location: getFieldValue(tempdialogarr?.location, existingData.location),
+                mobile: getFieldValue(tempdialogarr?.mobile, existingData.mobile),
+                resume: {
+                    resumeheadline: getFieldValue(tempdialogarr?.headline, existingData.resume?.resumeheadline),
+                },
+                skills: {
+                    keys: getFieldValue(tempdialogarr?.skills, existingData.skills?.keys),
+                },
+                modeType: 'save',
+                lastUpdated: new Date(),
+            };
+
+            // Check if `email` or `mobile` fields are present and filled in `tempdialogarr`
+            const shouldUpdateVerification = tempdialogarr?.email || tempdialogarr?.mobile;
+
+            if (shouldUpdateVerification) {
+                rawUpdatedData.emailVerified = false;
+                rawUpdatedData.mobileVerified = false;
+            }
+
+            // Remove undefined fields
+            const removeUndefinedFields = (obj) => {
+                if (Array.isArray(obj)) {
+                    return obj.map(removeUndefinedFields);
+                } else if (obj !== null && typeof obj === 'object') {
+                    return Object.entries(obj).reduce((acc, [key, value]) => {
+                        if (value !== undefined) {
+                            acc[key] = removeUndefinedFields(value);
+                        }
+                        return acc;
+                    }, {});
+                }
+                return obj;
+            };
+
+            const updatedData = removeUndefinedFields(rawUpdatedData);
+
+            // Update Firestore document
+            await setDoc(userDocRef, updatedData, { merge: true });
+
+            console.log("User data updated successfully:", updatedData);
+            toast({
+                title: "Profile Saved",
+                description: "Your Profile is successfully saved!",
+            });
+            settempdialogarr([]);
+        } catch (err) {
+            console.log(err);
+            toast({
+                variant: "destructive",
+                title: "Upload failed",
+                description: err.message || "Failed to save profile data",
+            });
+        }
+    };
+
 
     // const calculateProgress = useCallback(debounce((userData) => {
     //     const fields = [
@@ -935,10 +1120,12 @@ const Page = (props: Props) => {
     const saveHeadline = async (data) => {
         console.log(data);
         try {
-            await updateDoc(doc(db, "users", auth.currentUser?.uid), {
-                "resume.resumeheadline": data.headline,
-                lastUpdated: new Date(),
-            });
+            // await updateDoc(doc(db, "users", auth.currentUser?.uid), {
+            //     "resume.resumeheadline": data.headline,
+            //     lastUpdated: new Date(),
+            // });
+            settempdialogarr((prev) => ({ ...prev, headline: data.headline }))
+
             toast({ title: "Updated!" });
         } catch (err) {
             toast({ variant: "destructive", title: "Data Upload failed", description: err });
@@ -948,10 +1135,12 @@ const Page = (props: Props) => {
     const saveProfileSummary = async () => {
         console.log(dialogdata);
         try {
-            await setDoc(doc(db, "users", auth.currentUser?.uid), {
-                profileSummary: dialogdata.summary,
-                lastUpdated: new Date(),
-            }, { merge: true });
+            settempdialogarr((prev) => ({ ...prev, summary: dialogdata.summary }))
+            // await setDoc(doc(db, "users", auth.currentUser?.uid), {
+            //     profileSummary: dialogdata.summary,
+            //     lastUpdated: new Date(),
+            // }, { merge: true });
+
             toast({ title: "Summary added!" });
         } catch (err) {
             toast({ variant: "destructive", title: "Data Upload failed", description: err });
@@ -959,31 +1148,119 @@ const Page = (props: Props) => {
         }
     }
 
+    const saveName = async () => {
+        try {
+            // await setDoc(doc(db, "users", auth.currentUser?.uid), {
+            //     name: dialogdata.namef,
+            //     lastUpdated: new Date(),
+            // }, { merge: true });
+            settempdialogarr((prev) => ({ ...prev, name: dialogdata.namef }))
+
+            toast({ title: "Name added!" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
+    const saveEmail = async () => {
+        try {
+            // await setDoc(doc(db, "users", auth.currentUser?.uid), {
+            //     email: dialogdata.email,
+            //     lastUpdated: new Date(),
+            // }, { merge: true });
+            settempdialogarr((prev) => ({ ...prev, email: dialogdata.email }))
+
+            toast({ title: "Email added!" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
+    const saveMobilenumber = async () => {
+        try {
+          settempdialogarr((prev) => ({ ...prev, mobile: '+91' + dialogdata.mobile }))
+            toast({ title: "Mobile added!" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
+    const saveLocation = async () => {
+        try {
+            settempdialogarr((prev) => ({ ...prev, location: dialogdata.location }))
+            console.log(dialogdata.countrycode)
+            toast({ title: "Location added!" });
+        } catch (err) {
+            toast({ variant: "destructive", title: "Data Upload failed", description: err });
+            throw new Error(`something went wrong ${err}`);
+        }
+    }
     const saveKeySkills = async () => {
-        console.log(dialogdata);
         try {
             const userDoc = await getDoc(doc(db, "users", auth?.currentUser.uid));
             const data = userDoc.data();
 
-            await setDoc(
-                doc(db, "users", auth.currentUser?.uid),
-                {
-                    lastUpdated: new Date(),
-                    skills: {
-                        keys: dialogdata.skills
-                    }
+            // await setDoc(
+            //     doc(db, "users", auth.currentUser?.uid),
+            //     {
+            //         lastUpdated: new Date(),
+            //         skills: {
+            //             keys: dialogdata.skills
+            //         }
 
-                },
-                { merge: true } // Merge instead of overwriting
-            );
-            console.log('data exists true in keys')
-            toast({ title: "Skills Added" });
+            //     },
+            //     { merge: true } // Merge instead of overwriting
+            // );
+            settempdialogarr((prev) => ({ ...prev, skills: dialogdata.skills }))
+
+            toast({ title: "Skills Added!" });
         } catch (err) {
             toast({ variant: "destructive", title: "Data Upload failed", description: err });
             throw new Error(`something went wrong ${err}`);
         }
     }
     const links = [
+
+        {
+            id: 'name',
+            link: 'Add name',
+            description: `${userDetail?.name || 'Add Your Name'}`,
+            headline: 'Add Your Name',
+            fields: [
+                { id: 'namef', label: 'Name', placeholder: `${userDetail?.name || 'Add Your Name'}` }
+            ], // No single input field; handled dynamically
+            save: saveName,
+        },
+        {
+            id: 'Emailver',
+            link: 'Add Email',
+            description: `${userDetail?.email || 'Add Your Email'}`,
+            headline: 'Add Your Email',
+            fields: [
+                { id: 'email', label: 'Email', placeholder: `${userDetail?.email || 'Add Your Email'}` }
+            ], // No single input field; handled dynamically
+            save: saveEmail,
+        },
+        {
+            id: 'mobilenumber',
+            link: 'Add Mobile Number',
+            description: `${userDetail?.mobile || 'Add Your Mobile Number'}`,
+            headline: 'Add Your Mobile',
+            fields: [
+                { id: 'mobile', label: 'Mobile', placeholder: `${userDetail?.mobile || 'Add Your Mobile'}` }
+            ], // No single input field; handled dynamically
+            save: saveMobilenumber,
+        },
+        {
+            id: 'location',
+            link: 'Add location',
+            description: `${userDetail?.location || 'Add Your Location'}`,
+            headline: 'Add Your Location',
+            fields: [
+                { id: 'location', label: 'Location', placeholder: `${userDetail?.location || 'Add Your location'}` }
+            ], // No single input field; handled dynamically
+            save: saveLocation,
+        },
         {
             id: 'resumeHeadline',
             link: 'Add resume headline',
@@ -997,7 +1274,7 @@ const Page = (props: Props) => {
         {
             id: 'keySkills',
             link: 'Add key skills',
-            description: `${userDetail?.skills.keys.length + ' skills added' || 'Recruiters look for candidates with specific key skills'}`,
+            description: `${userDetail?.skills?.keys?.length + ' skills added' || 'Recruiters look for candidates with specific key skills'}`,
             headline: 'Key Skills',
             fields: [], // No single input field; handled dynamically
             save: saveKeySkills,
@@ -1134,7 +1411,6 @@ const Page = (props: Props) => {
         });
     };
     return (
-
         <div className="bg-[#f8f9fa] py-[15rem] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem]" >
             <div id="recaptcha-container"></div>
             <Dialog open={cropping} onOpenChange={setCropping}>
@@ -1666,7 +1942,7 @@ const Page = (props: Props) => {
                                 link={item.link}
                                 description={
                                     item.id === 'keySkills' ? (
-                                        userDetail?.skills.keys.map((skill, index) => (
+                                        userDetail?.skills?.keys?.map((skill, index) => (
                                             <div className="flex flex-wrap mt-2 w-fit"
                                                 key={index}
                                             >
@@ -1684,17 +1960,56 @@ const Page = (props: Props) => {
                                                 </div>
                                             </div>
                                         ))
+                                    ) : item.id === 'Emailver' ? (
+                                        // <div className="text-sm text-[#229715] mt-2 flex overflow-hidden">
+                                        <>
+                                            <p className="overflow-hidden break-all w-[791px]">{userDetail?.email}</p>
+                                            {userDetail?.emailVerified === true ? (
+                                                <></>
+                                            ) : (
+                                                <Button variant='link' onClick={() => sendVerificationEmail()} className=' absolute float-right h-[-webkit-fill-available] right-[-15px] bottom-px' >
+                                                    Verify your email?
+                                                </Button>
+                                            )}
+                                        </>
+                                        // </div>
+                                    ) : item.id === 'mobilenumber' ? (
+                                        // <div className="text-sm text-[#229715] mt-2 flex overflow-hidden">
+                                        <>
+                                            <p className="overflow-hidden break-all w-[791px]">{userDetail?.mobile}</p>
+                                            {userDetail?.mobileVerified === true ? (
+                                                <></>
+                                            ) : otpLoadingtwo ? (
+                                                <LoaderCircle size={24} className="absolute float-right h-[-webkit-fill-available] right-0 bottom-px animate-spin" color='black' />
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    variant="link"
+                                                    className="absolute float-right h-[-webkit-fill-available] right-[-15px] bottom-px"
+                                                    onClick={() => sendSMS(`${userDetail?.mobile}`)}
+                                                >
+                                                    Verify Number?
+                                                </Button>
+                                            )}
+                                        </>
                                     ) : (
                                         item.description
                                     )
+
                                 }
                                 onLinkClick={() => handleDialogOpen(item.id)}
                             />
                         )
                     ))}
                     <div className="flex justify-end gap-[10px]" >
-                        <Button variant='outline' disabled={true}>SAVE</Button>
-                        <Button disabled={true}>PUBLISH</Button>
+                        <Button variant='outline' disabled={disabledSaveButton} onClick={saveAllField}>SAVE</Button>
+                        <Button
+                            disabled={isPublishDisabled}
+                            onClick={handlePublish}
+                            variant="outline"
+                        >
+                            PUBLISH
+                        </Button>
                     </div>
                     {/* Dynamic Dialog Rendering */}
                     {openDialog && (
@@ -1713,8 +2028,48 @@ const Page = (props: Props) => {
                                             console.log(skills);
                                         }
                                         } />
-                                    ) : openDialog === 'employment' ? (
-                                        <></>
+                                    ) : openDialog === 'mobilenumber' ? (
+                                        <>
+                                            <div className="flex items-center mt-4 space-x-4">
+                                                {/* Select country code */}
+                                                <Select
+                                                    required={true}
+                                                    value={dialogdata.countryCode || "+91"}
+                                                    onValueChange={(e) => {
+                                                        console.log("Selected value:", e); // Debug log
+                                                        settempdialogarr((prev) => {
+                                                            const updatedData = { ...prev, countryCode: e };
+                                                            console.log("Updated dialog data:", updatedData); // Debug log
+                                                            return updatedData;
+                                                        });
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="w-32">
+                                                        <SelectValue placeholder="Select Code" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            <SelectLabel>Select Code</SelectLabel>
+                                                            {countryCodes.map((country, index) => (
+                                                                <SelectItem key={`${country.dial_code}-${country.code}-${index}`} value={country.dial_code}>
+                                                                    {country.flag} ({country.dial_code})
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+
+                                                {/* Input for mobile number */}
+                                                <Input
+                                                    type="text"
+                                                    required={true}
+                                                    placeholder="Enter mobile number"
+                                                    value={dialogdata.mobile || ""}
+                                                    onChange={(e) => setDialogData((prev) => ({ ...prev, mobile: e.target.value }))}
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                        </>
                                     ) : (
                                         links.find(link => link.id === openDialog)?.fields?.map((field) => (
                                             <div key={field.id}>
@@ -1759,7 +2114,7 @@ const Page = (props: Props) => {
                                                     ?.fields?.some((field) => !dialogdata[field.id]?.trim())
                                             }
                                         >
-                                            Save
+                                            Add
                                         </Button>
                                     </div>
                                 </form>
@@ -1837,7 +2192,7 @@ const Info = ({ headline, link, description, onLinkClick }) => (
                 {link}
             </span>
         </div>
-        <div className="text-sm text-[#229715] mt-2 grid grid-cols-10 overflow-hidden">
+        <div className="text-sm text-[#229715] mt-2 grid grid-cols-10 overflow-hidden relative">
             {typeof description === 'string' ? <p className="overflow-hidden break-all w-[791px]">{description}</p> : description}
         </div>
     </div>
