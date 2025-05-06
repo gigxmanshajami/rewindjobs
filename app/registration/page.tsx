@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from "../firebase/firebase";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from 'firebase/auth';
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
@@ -159,6 +159,7 @@ const RegistrationPage = () => {
           uid: user.uid,
           name: formData.fullName,
           email: formData.email,
+          registeredOn: serverTimestamp(),
           mobileVerified: true,
           mobile: formData.mobile,
           profileSummary: "",
@@ -219,6 +220,7 @@ const RegistrationPage = () => {
           name: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
+          registeredOn: serverTimestamp(),
           mobile: user.phoneNumber || "",
           mobileVerified: false,
           profileSummary: "",
