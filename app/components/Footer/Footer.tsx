@@ -28,24 +28,24 @@ const Footer = () => {
             className={`bg-[#fff] mt-0 ${pathname === '/' ? 'hidden' : 'block'
                 }`}
         >
-                <div className='py-10 lg:flex flex-col justify-between border-t p-5 border-t-bordertop pb-4'>
-                    <div className="flex justify-between">
-                        <h4 className='text-black text-sm text-center lg:text-start font-normal'>@2024 All Rights Reserved By RewindJobs</h4>
-                        <div className="flex gap-5 mt-5 lg:mt-0 justify-center lg:justify-start">
-                            <h4 className='text-black text-sm font-normal'><Link href="/privacypolicy/page.txt" target="_blank">Privacy policy</Link></h4>
-                            <div className="h-5 bg-bordertop w-0.5"></div>
-                            <h4 className='text-black text-sm font-normal'><Link href="/termsconditions/page.txt" target="_blank">Terms & conditions</Link></h4>
-                        </div>
+            <div className='py-10 lg:flex flex-col justify-between  border-t p-5 border-t-bordertop pb-4'>
+                <div className="flex lg:justify-between justify-center items-center flex-col lg:flex-row  lg:items-baseline">
+                    <h4 className='text-black text-sm text-center lg:text-start font-normal'>@2024 All Rights Reserved By RewindJobs</h4>
+                    <div className="flex gap-5 mt-5 lg:mt-0 justify-center lg:justify-start">
+                        <h4 className='text-black text-sm font-normal'><Link href="/privacypolicy/page.txt" target="_blank">Privacy policy</Link></h4>
+                        <div className="h-5 bg-bordertop w-0.5"></div>
+                        <h4 className='text-black text-sm font-normal'><Link href="/termsconditions/page.txt" target="_blank">Terms & conditions</Link></h4>
                     </div>
-                    {/* <div className="pt-4 pb-1">
+                </div>
+                {/* <div className="pt-4 pb-1">
                         <Link href="https://manshajami.xyz/" target="_blank"><span className="text-sm flex items-center justify-center font-normal text-black float-right"> Developed With <Heart className="ml-1 mr-1 animate-pulse" size={17} color="red" fill="red" /> By <span className="underline ml-1"> Mansha Jami</span> </span></Link>
                     </div> */}
-                </div>
+            </div>
 
-                {/* <div className="my-24 grid grid-cols-1 gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-12 xl:gap-x-[8rem]"> */}
+            {/* <div className="my-24 grid grid-cols-1 gap-y-10 gap-x-16 sm:grid-cols-2 lg:grid-cols-12 xl:gap-x-[8rem]"> */}
 
-                {/* COLUMN-1 */}
-                {/* <div className='col-span-4 md:col-span-12 lg:col-span-4 '>
+            {/* COLUMN-1 */}
+            {/* <div className='col-span-4 md:col-span-12 lg:col-span-4 '>
                         <img src={'/assets/logo/logo.png'} alt="logo" className='pb-8' />
                         <div className='flex gap-4 ml-[15px]'>
                             <a href="https://facebook.com" className='footer-fb-icons' style={{
@@ -66,8 +66,8 @@ const Footer = () => {
                         </div>
                     </div> */}
 
-                {/* COLUMN-2/3 */}
-                {/* <div className="group relative col-span-2 md:col-span-4 lg:col-span-2">
+            {/* COLUMN-2/3 */}
+            {/* <div className="group relative col-span-2 md:col-span-4 lg:col-span-2">
                         <ul>
                             {products.map((product) => (
                                 <li key={product.id} className="mb-5">
@@ -83,8 +83,8 @@ const Footer = () => {
                         </ul>
                     </div> */}
 
-                {/* COLUMN-4 */}
-                {/* <div className='col-span-4 md:col-span-4 lg:col-span-4'>
+            {/* COLUMN-4 */}
+            {/* <div className='col-span-4 md:col-span-4 lg:col-span-4'>
                         <div className="flex gap-2 ">
                             <MapPin className="text-black" size={24} />
                             <h5 className="text-base font-normal text-black">Sector 62 Noida, U.P, India 201309</h5>
@@ -98,11 +98,11 @@ const Footer = () => {
                             <h5 className="text-base font-normal text-black">contact@rewindjobs.com</h5>
                         </div>
                     </div> */}
-                {/* </div> */}
+            {/* </div> */}
 
-                {/* All Rights Reserved */}
+            {/* All Rights Reserved */}
 
-            </div>
+        </div>
     )
 }
 

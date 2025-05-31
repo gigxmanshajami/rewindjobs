@@ -84,15 +84,15 @@ const Navbar = () => {
     };
 
     return (
-        <Disclosure as="nav" className={`bg-white sticky top-0 inset-x-0 z-20 ${scrolled ? 'shadow-[0_0_20px_#e6e6e6b5]' : 'shadow-none'}`}>
-            <div className="mx-auto max-w-7xl px-6">
-                <div className="relative flex h-20 items-center justify-between">
+        <Disclosure as="nav" className={`bg-white sticky top-0 inset-x-0 z-20 ${scrolled ? 'shadow-[0_0_20px_#e6e6e6b5]' : 'shadow-none'}`} items>
+            <div className="mx-auto max-w-7xl px-6 ">
+                <div className="relative flex h-20 items-center justify-between ">
                     {/* LOGO */}
                     <div>
                         <Link href={'https://www.altezzasys.com/'} target='_blank'>
                             <div className="flex flex-shrink-0 items-center">
                                 <img
-                                    className="block h-12 w-40 lg:hidden"
+                                    className="block lg:h-12 lg:w-40 lg:hidden w-[178px] h-[100px]"
                                     src={'/assets/logo/logo.png'}
                                     alt="Logo"
                                 />
@@ -105,7 +105,7 @@ const Navbar = () => {
                         </Link>
                     </div>
 
-                    <div className="flex gap-4 relative right-[113px]">
+                    <div className="hidden lg:flex gap-4 relative right-[113px]">
                         <Link href={'/'} className='hover:underline'>
                             Home
                         </Link>
@@ -121,35 +121,37 @@ const Navbar = () => {
                         {loading ? (
                             <Skeleton className="w-[40px] h-[40px] rounded-full" />
                         ) : loggedIn ? (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Avatar>
-                                        <AvatarImage
-                                            src={
-                                                userDetail?.photoURL ||
-                                                auth.currentUser?.photoURL ||
-                                                "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"
-                                            }
-                                        />
-                                        <AvatarFallback>
-                                            <Skeleton className="w-[40px] h-[40px] rounded-full" />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56 mr-8">
-                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuGroup>
-                                        <Link href={'/profile'}>
-                                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                                        </Link>
-                                    </DropdownMenuGroup>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className='hidden lg:block'>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Avatar>
+                                            <AvatarImage
+                                                src={
+                                                    userDetail?.photoURL ||
+                                                    auth.currentUser?.photoURL ||
+                                                    "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541"
+                                                }
+                                            />
+                                            <AvatarFallback>
+                                                <Skeleton className="w-[40px] h-[40px] rounded-full" />
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-56 mr-8">
+                                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuGroup>
+                                            <Link href={'/profile'}>
+                                                <DropdownMenuItem>Profile</DropdownMenuItem>
+                                            </Link>
+                                        </DropdownMenuGroup>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         ) : (
-                            <div className="flex items-center space-x-4">
+                            <div className="lg:flex items-center hidden space-x-4">
                                 <Signdialog />
                                 <Registerdialog />
                             </div>

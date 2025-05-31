@@ -516,56 +516,6 @@ const Page = (props: Props) => {
     const getFieldValue = (field) => {
         return field === undefined || field === '' ? null : field;
     };
-    // const saveAllField = async () => {
-    //     setdisabledSaveButton(true);
-    //     toast({
-
-    //         title: "Saving Data",
-    //         description: "Please Wait While Your Datas are being saved",
-    //     });
-    //     try {
-    //         console.log(tempdialogarr?.headline)
-
-    //         // Set document in Firestore
-    //         await setDoc(
-    //             doc(db, "users", auth.currentUser?.uid),
-    //             {
-    //                 profileSummary: getFieldValue(tempdialogarr?.summary),
-    //                 name: getFieldValue(tempdialogarr?.name),
-    //                 email: getFieldValue(tempdialogarr?.email),
-    //                 location: getFieldValue(tempdialogarr?.location),
-    //                 mobile: getFieldValue(tempdialogarr?.mobile),
-    //                 resume: {
-    //                     resumeheadline: getFieldValue(tempdialogarr?.headline),
-    //                 },
-    //                 skills: {
-    //                     keys: getFieldValue(tempdialogarr?.skills),
-    //                 },
-    //                 modeType: 'save',
-    //                 lastUpdated: new Date(),
-    //             },
-    //             { merge: true }
-    //         );
-
-    //         toast({
-
-    //             title: "Updated",
-    //             description: "successfully to update profile information",
-    //         });
-    //     } catch (err) {
-    //         console.log(err);
-    //         // setdisabledSaveButton(false);
-    //         toast({
-    //             variant: "destructive",
-    //             title: "Update failed",
-    //             description: err.message || "Failed to update profile information",
-    //         });
-    //     } finally {
-    //         setdisabledSaveButton(false);
-    //     }
-
-    // }
-
     const saveAllField = async () => {
         try {
             const userDocRef = doc(db, "users", auth.currentUser?.uid);
@@ -640,70 +590,6 @@ const Page = (props: Props) => {
             });
         }
     };
-
-
-    // const calculateProgress = useCallback(debounce((userData) => {
-    //     const fields = [
-    //         "name",
-    //         "email",
-    //         "profileSummary",
-    //         "location",
-    //         "mobile",
-    //         "photoURL",
-    //         "resume.resumeheadline",
-    //         "resume.resumepath", // Nested field
-    //     ];
-
-    //     const missingFields = [];
-    //     const filledFields = fields.filter((field) => {
-    //         const keys = field.split(".");
-    //         let value = userData;
-
-    //         keys.forEach((key) => {
-    //             value = value?.[key];
-    //         });
-
-    //         if (!value) {
-    //             missingFields.push(field);
-    //         }
-
-    //         return !!value;
-    //     });
-
-    //     const skillsKeys = userData?.skills?.keys;
-    //     if (Array.isArray(skillsKeys) && skillsKeys.length > 0) {
-    //         filledFields.push("skills.keys");
-    //     } else {
-    //         missingFields.push("skills.keys");
-    //     }
-
-    //     const totalFields = fields.length + 1; // +1 for skills.keys field
-    //     const progressValue = Math.round((filledFields.length / totalFields) * 100);
-
-    //     setProgress(progressValue);
-
-    //     setUnfilledFields(missingFields.map((field) => missingFieldLabels[field] || field));
-
-    //     populateRefs(missingFields);
-
-    //     console.log(progressValue)
-    //     return { progress: progressValue, missingFields };
-    // }, 500), []); // Debounce for 500ms
-
-    // const updateUserProgress = async (userId, userData) => {
-    //     try {
-    //         const { progress } = calculateProgress(userData);
-    //         console.log(progress)
-    //         // Update progress in Firestore
-    //         const userDoc = doc(db, "users", userId);
-    //         await updateDoc(userDoc, { progress });
-    //         console.log(`User progress updated to ${progress}%`);
-    //     } catch (error) {
-    //         console.error("Error updating progress:", error);
-    //     }
-    // };
-
-
     const subscribeToUser = (userId) => {
         const userDoc = doc(db, "users", userId);
 
@@ -748,22 +634,6 @@ const Page = (props: Props) => {
 
         initialize();
     }, []); // Empty dependency array ensures this runs once on mount
-
-    // const handleScrollToFirstMissingField = () => {
-    //     // Find the first missing field using unfilledFields
-    //     const firstMissingFieldKey = unfilledFields[0];
-
-    //     if (firstMissingFieldKey) {
-    //         const firstMissingFieldRef = sectionRefs.current[firstMissingFieldKey];
-
-    //         if (firstMissingFieldRef && firstMissingFieldRef.current) {
-    //             firstMissingFieldRef.current.scrollIntoView({
-    //                 behavior: "smooth",
-    //                 block: "center", // Scroll to the center of the screen
-    //             });
-    //         }
-    //     }
-    // };
 
     const handleImageClick = () => {
         fileInputRef.current.click();
@@ -1411,7 +1281,7 @@ const Page = (props: Props) => {
         });
     };
     return (
-        <div className="bg-[#f8f9fa] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem]" >
+        <div className="bg-[#f8f9fa] flex flex-col justify-center gap-[0.9rem] px-4 pt-[2rem] " >
             <div id="recaptcha-container"></div>
             <Dialog open={cropping} onOpenChange={setCropping}>
                 <DialogTrigger asChild>
@@ -1475,7 +1345,7 @@ const Page = (props: Props) => {
                             </div>
                         </div>
 
-                    
+
 
                         {/* Expected Location */}
                         <div>
@@ -1585,7 +1455,7 @@ const Page = (props: Props) => {
                 </DialogContent>
             </Dialog>
 
-            <div className="bg-white  rounded-[20px] shadow-[0_0_20px_#e6e6e6b5]  pl-[30px] pr-5 py-5  w-[1149px] h-[265px] mx-auto flex items-center justify-around space-x-8">
+            <div className="bg-white  rounded-[20px] shadow-[0_0_20px_#e6e6e6b5]  lg:pl-[30px] lg:pr-5 lg:py-5 w-fit h-fit lg:w-[1149px] lg:h-[265px] mx-auto flex lg:flex-row flex-col items-center lg:justify-around space-x-8 pr-2 pl-2 py-2">
                 <div className="w-[9rem] flex items-center space-x-6 overflow-hidden" onClick={handleImageClick}>
                     {/* Profile Image and Progress Ring */}
                     <CircularProgressbarWithChildren
@@ -1616,7 +1486,7 @@ const Page = (props: Props) => {
                                     className="rounded-full object-cover"
                                 />
                                 ) : (
-                                    <Skeleton className="w-[129px] h-[126px] rounded-full" />
+                                    <Skeleton className="lg:w-[129px] h-[126px] rounded-full w-fit" />
                                 )
                             }
 
@@ -1634,13 +1504,11 @@ const Page = (props: Props) => {
                             </div>
                         </div>
                     </CircularProgressbarWithChildren>
-
                 </div>
-
                 {/* User Information */}
-                <div style={{
-                    marginLeft: "-28px",
-                }}>
+                <div
+                    className="
+                flex items-center lg:items-start flex-col lg:flex-col lg:ml-[-28px]">
                     <span className="flex"><h1 className="text-2xl font-semibold">{userDetail?.name || "Please Enter Your Name"
                     }</h1>
                         <TooltipProvider>
@@ -1651,12 +1519,11 @@ const Page = (props: Props) => {
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-
                     </span>
                     <span className="text-sm mt-1 flex "> <p className="text-[#7e85a1] mr-1">Profile last updated - {lastUpdatedDisplay || ""} </p>
                     </span>
-                    <hr className="mt-5 mb-5" />
-                    <div className="flex flex-row justify-between gap-8 ">
+                    <hr className="lg:mt-5 mt-2 lg:mb-5 mb-2" />
+                    <div className="flex flex-row justify-between mb-5 lg:mb-0 gap-8 ">
                         <div className="wrapper">
                             <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><MapPinHouse size={15} color="#474d6a" /> {userDetail?.location || "Add your location"}</p>
                             {/* <p className="text-[13px] flex gap-2.5 mt-[9px] text-[#474d6a]"><BriefcaseBusiness size={15} color="#474d6a" /> {<Skeleton className="w-[100px] h-[20px] rounded-full" />}</p> */}
@@ -1733,7 +1600,7 @@ const Page = (props: Props) => {
                 {/* Sidebar with Profile Suggestions */}
                 {unfilledFields.length > 0 ? (
 
-                    <div className="w-[380px] shadow-none h-[225px] bg-[#FFF2E3] overflow-hidden overflow-y-auto relative m-0 p-5 rounded-[10px]">
+                    <div className="w-[380px] shadow-none h-[225px] bg-[#FFF2E3] overflow-hidden overflow-y-auto relative mr-[0px!important] ml-[0px!important] p-5 rounded-[10px]">
                         <div className="h-[128px] border-none">
                             {/* items */}
                             {unfilledFields.map((field, index) => (
@@ -2029,7 +1896,7 @@ const Page = (props: Props) => {
 export default Page
 
 const Info = ({ headline, link, description, onLinkClick }) => (
-    <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8">
+    <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6  h-fit lg:w-[860px] w-fit pb-8">
         <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">{headline}</h2>
             <span
@@ -2060,7 +1927,7 @@ function QuickLinks({ handleDialogOpen }) {
     ];
 
     return (
-        <div className="bg-white rounded-lg border  border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
+        <div className="bg-white rounded-lg border hidden lg:block border-solid border-[#e7e7f1] w-[242px] max-h-[539px] h-[539px] p-6" style={{
             position: 'sticky',
             top: '96px', // Adjust based on your nav height
             alignSelf: 'start',
@@ -2295,8 +2162,8 @@ function ResumeSection() {
     };
     return (
         <>
-            {resumeloading ? (<Skeleton className="w-[860px] h-[256px] rounded-lg" />) : (
-                <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit w-[860px] pb-8"  >
+            {resumeloading ? (<Skeleton className="lg:w-[860px] w-fit h-[256px] rounded-lg" />) : (
+                <div className="bg-white rounded-lg shadow-[0_0_20px_#e6e6e6b5] p-6 h-fit lg:w-[860px] w-fit pb-8"  >
                     {/* Header */}
                     < div className="flex items-center justify-between" >
                         <h2 className="text-base font-semibold">Resume</h2>

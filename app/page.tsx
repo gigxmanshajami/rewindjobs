@@ -12,7 +12,9 @@ import Newsletter from './components/Newsletter/Newsletter';
 export default function Home() {
   return (
     <main >
-      <Banner />
+      <section className='snap-mandatory snap-y h-screen snap-center'>
+        <Banner />
+      </section>
     </main>
   )
 }

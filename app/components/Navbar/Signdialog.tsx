@@ -18,8 +18,8 @@ const Signin = () => {
 
     return (
         <>
-            <div className="absolute inset-y-0 right-0 flex items-center sm:static sm:inset-auto sm:pr-0">
-                <div className='hidden lg:block'>
+            <div className=" inset-y-0 right-0 flex items-center sm:static sm:inset-auto sm:pr-0">
+                <div className='lg:block'>
                     <Link href={`/signin`}>
                         <Button variant="outline" className='text-black shadow-none font-bold  p-[22px] rounded-full'>Login</Button>
                     </Link>
